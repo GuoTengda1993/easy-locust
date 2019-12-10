@@ -1,0 +1,2 @@
+include LICENSE
+recursive-include easy_locust/demo *
