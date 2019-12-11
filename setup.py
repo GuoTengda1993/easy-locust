@@ -17,7 +17,7 @@ setup(
     name='easy-locust',
     version=version,
     description="Extensions for locustio",
-    long_description="""Make locust easier.""",
+    long_description=open("README.md", encoding='utf-8').read(),
     classifiers=[
         "Topic :: Software Development :: Testing :: Traffic Generation",
         "Development Status :: 4 - Beta",

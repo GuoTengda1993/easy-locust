@@ -15,9 +15,20 @@ Easy-Locust is not necessary for slaves.
 
 Use `easy-locust --demo` to generate an Excel demo, fill it and start your test.
 
+Same parameters with locust, so I just introduce the different parameters here:
+
+`easy-locust -f xxx.xls` -- This will transform Excel to locustfile, and run it. You can also use `-f xxx.py`.
+
+`easy-locust --xf xxx.xls` -- -- This just transform Excel to locustfile, will not start test.
+
+`easy-locust -f xxx.xls --master -d` -- `-d` is distributed mode, can automatically run slaves. There is one precondition, you need write slaves information in Excel at Slave Sheet.
+
+
 ## Bug reporting
 
 Open a Github issue and follow the template listed there.
+
+https://github.com/GuoTengda1993/easy-locust
 
 ## Authors
 
