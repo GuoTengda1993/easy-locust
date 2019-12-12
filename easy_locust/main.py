@@ -610,7 +610,7 @@ def main():
                 logger.error('master IP cannot be None if you use --distribute')
                 sys.exit(1)
             try:
-                locust_cli_slave = 'nohup unilocust -f /root/{locustfile} --slave --master-host={masteIP} > /dev/null 2>&1 &'.format(
+                locust_cli_slave = 'nohup locust -f /root/{locustfile} --slave --master-host={masteIP} > /dev/null 2>&1 &'.format(
                     locustfile=ptpy, masteIP=master_ip)
                 thread_pool = []
                 for slave in pt_slave_info:
