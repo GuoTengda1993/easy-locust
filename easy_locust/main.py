@@ -295,7 +295,7 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
     )
 
     # New feature / Easy-Locust
-    parser.add_option(
+    parser.add_argument(
         '--demo',
         action='store_true',
         dest='demo',
@@ -303,13 +303,13 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
         help='Generate Excel demo file in current folder'
     )
 
-    parser.add_option(
+    parser.add_argument(
         '--xf', '--locustfile-xls',
         dest='xlsfile',
         help="XLS file, and this file will be transformed to *.py Default: locustfile"
     )
 
-    parser.add_option(
+    parser.add_argument(
         '-d', '--distribute',
         action='store_true',
         dest='distribute',
@@ -488,10 +488,6 @@ def main():
     logger = logging.getLogger(__name__)
 
     locust_path = get_locust_path()
-
-    if options.show_version:
-        print("Locust %s" % (version,))
-        sys.exit(0)
 
     if options.demo:
         if not locust_path:
