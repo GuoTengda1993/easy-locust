@@ -1,5 +1,17 @@
 # -*- coding: utf-8 -*-
+import json
 import xlrd
+from locust.log import console_logger
+
+
+def urlunparse(prefix, query):
+    if len(query) == 0:
+        return prefix
+    prefix = prefix + '?'
+    for item in query.items():
+        segment = item[0] + '=' + item[1] + '&'
+        prefix += segment
+    return prefix.strip('&')
 
 
 class HandleExcel:
@@ -46,27 +58,25 @@ class PtExcel(HandleExcel):
         pt_sheet = self.workbook.sheet_by_name('PT')
         host = pt_sheet.cell_value(0, 1)
 
-        min_wait = pt_sheet.cell_value(1, 1)
-        if min_wait == '' or isinstance(min_wait, str):
-            min_wait = str(300)
+        min_wait = pt_sheet.cell_value(1, 1).strip()
+        if min_wait == '':
+            min_wait = str(0.3)
         else:
-            min_wait = str(int(min_wait))
+            min_wait = str(float(min_wait))
 
-        max_wait = pt_sheet.cell_value(2, 1)
-        if max_wait == '' or isinstance(max_wait, str):
-            max_wait = str(500)
+        max_wait = pt_sheet.cell_value(2, 1).strip()
+        if max_wait == '':
+            max_wait = str(0.5)
         else:
-            max_wait = str(int(max_wait))
+            max_wait = str(float(max_wait))
 
-        stop_timeout = pt_sheet.cell_value(3, 1)
-        if stop_timeout == '' or isinstance(stop_timeout, str):
-            stop_timeout = str(1000)
-        else:
-            stop_timeout = str(int(stop_timeout))
+        request_mode = pt_sheet.cell_value(3, 1)
+        if request_mode == '' or request_mode is None:
+            request_mode = 'HttpLocust'
 
         token_type = pt_sheet.cell_value(4, 1)
         run_in_order = pt_sheet.cell_value(5, 1)
-        return host, min_wait, max_wait, token_type, run_in_order, stop_timeout
+        return host, min_wait, max_wait, token_type, run_in_order, request_mode
 
     def pt_api_info(self):
         pt_sheet = self.workbook.sheet_by_name('PT')
@@ -76,15 +86,21 @@ class PtExcel(HandleExcel):
             weight = str(int(pt_sheet.cell_value(i, 0)))
             pt_url = pt_sheet.cell_value(i, 1)
             method = pt_sheet.cell_value(i, 2)
-            query = pt_sheet.cell_value(i, 3)
-            if '\'' in query:
-                query.replace('\'', '"')
+            query = pt_sheet.cell_value(i, 3).strip()
+            if query != '':
+                if '\'' in query:
+                    query.replace('\'', '"')
+                try:
+                    query = json.loads(query)
+                    pt_url = urlunparse(pt_url, query)
+                except json.decoder.JSONDecodeError:
+                    console_logger.warning('Query decode error, this will not parse to url: {}'.format(query))
             body = pt_sheet.cell_value(i, 4)
             if '\'' in body:
                 body.replace('\'', '"')
             expect_code = pt_sheet.cell_value(i, 5)
             expect_str = pt_sheet.cell_value(i, 6)
-            api_list.append([weight, pt_url, method, query, body, expect_code, expect_str])
+            api_list.append([weight, pt_url, method, body, expect_code, expect_str])
         return api_list
 
     def pt_slave(self):
@@ -117,9 +133,12 @@ class PtExcel(HandleExcel):
 
 
 if __name__ == '__main__':
-    test = PtExcel('E:\\Temp\\pt.xls')
-    conf = test.pt_config()
-    print(conf)
-    api = test.pt_api_info()
-    for each in api:
-        print(each)
+    # test = PtExcel('E:\\Temp\\pt.xls')
+    # conf = test.pt_config()
+    # print(conf)
+    # api = test.pt_api_info()
+    # for each in api:
+    #     print(each)
+    query = {}
+    a = urlunparse('https://www.baidu.com', query)
+    print(a)
