@@ -58,13 +58,13 @@ class PtExcel(HandleExcel):
         pt_sheet = self.workbook.sheet_by_name('PT')
         host = pt_sheet.cell_value(0, 1)
 
-        min_wait = pt_sheet.cell_value(1, 1).strip()
+        min_wait = pt_sheet.cell_value(1, 1)
         if min_wait == '':
             min_wait = str(0.3)
         else:
             min_wait = str(float(min_wait))
 
-        max_wait = pt_sheet.cell_value(2, 1).strip()
+        max_wait = pt_sheet.cell_value(2, 1)
         if max_wait == '':
             max_wait = str(0.5)
         else:
