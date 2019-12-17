@@ -167,7 +167,7 @@ def make_locustfile(ptfile):
     if 'UserName' in token_body and 'PassWord' in token_body:
         user_infos = pt_data.pt_user_info()
     else:
-        user_infos = [[None, None]]
+        user_infos = []
 
     locustfile = BASIC_IMPORT.format(USER_INFO=str(user_infos))
 
