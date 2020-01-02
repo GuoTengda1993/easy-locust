@@ -59,18 +59,12 @@ MODE_TOKEN_FIRST_TIME = '''
     def setup(self):
         global headers
         headers = []
-        if len(user_info) == 0:
+        for each in user_info:
+            UserName, PassWord = each[0], each[1]
             body = {TOKEN_BODY}
             token = get_token(url='{TOKEN_URL}', body=body, locate='{TOKEN_LOCATE}')
             header = @-'Content-Type': 'application/json', '{TOKEN_PARAM}': token-@
             headers.append(header)
-        else:
-            for each in user_info:
-                UserName, PassWord = each[0], each[1]
-                body = {TOKEN_BODY}
-                token = get_token(url='{TOKEN_URL}', body=body, locate='{TOKEN_LOCATE}')
-                header = @-'Content-Type': 'application/json', '{TOKEN_PARAM}': token-@
-                headers.append(header)
 '''
 MODE_TOKEN_NEVER = '''
     def setup(self):
@@ -167,7 +161,7 @@ def make_locustfile(ptfile):
     if 'UserName' in token_body and 'PassWord' in token_body:
         user_infos = pt_data.pt_user_info()
     else:
-        user_infos = []
+        user_infos = [[None, None]]
 
     locustfile = BASIC_IMPORT.format(USER_INFO=str(user_infos))
 

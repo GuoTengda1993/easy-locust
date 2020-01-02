@@ -130,15 +130,3 @@ class PtExcel(HandleExcel):
 
     def request_parameter(self):
         pass
-
-
-if __name__ == '__main__':
-    # test = PtExcel('E:\\Temp\\pt.xls')
-    # conf = test.pt_config()
-    # print(conf)
-    # api = test.pt_api_info()
-    # for each in api:
-    #     print(each)
-    query = {}
-    a = urlunparse('https://www.baidu.com', query)
-    print(a)
