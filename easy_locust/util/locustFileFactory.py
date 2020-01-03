@@ -130,21 +130,77 @@ MODE_TASK_SEQ_POST = '''
 MODE_TASKSET_GET_FAST = '''
     @task({WEIGHT})
     def test{NUM}(self):
-        self.client.{METHOD}('{URL}', headers=random.choice(headers))
+        with self.client.{METHOD}('{URL}', headers=random.choice(headers), catch_response=True) as resp:
+            if resp.status_code == int({EXPECT_CODE}):
+                if b'{EXPECT_STR}' not in resp.content:
+                    resp.failure('Error: wrong response --  ' + resp.content.decode('utf-8'))
+                else:
+                    resp.success()
+            else:
+                resp.failure('Error: wrong status code -- ' + str(resp.status_code))
+
 '''
 MODE_TASKSET_POST_FAST = '''
     @task({WEIGHT})
     def test{NUM}(self):
         body = {POST_BODY}
-        self.client.{METHOD}('{URL}', json=body, headers=random.choice(headers))
+        with self.client.{METHOD}('{URL}', json=body, headers=random.choice(headers), catch_response=True) as resp:
+            if resp.status_code == int({EXPECT_CODE}):
+                if b'{EXPECT_STR}' not in resp.content:
+                    resp.failure('Error: wrong response --  ' + resp.content.decode('utf-8'))
+                else:
+                    resp.success()
+            else:
+                resp.failure('Error: wrong status code -- ' + str(resp.status_code))
+
 '''
 MODE_TASK_SEQ_GET_FAST = '''
     @seq_task({SEQ})
     @task({WEIGHT})
     def test{NUM}(self):
-        self.client.{METHOD}('{URL}', headers=random.choice(headers))                
+        with self.client.{METHOD}('{URL}', headers=random.choice(headers), catch_response=True) as resp:
+            if resp.status_code == int({EXPECT_CODE}):
+                if b'{EXPECT_STR}' not in resp.content:
+                    resp.failure('Error: wrong response --  ' + resp.content.decode('utf-8'))
+                else:
+                    resp.success()
+            else:
+                resp.failure('Error: wrong status code -- ' + str(resp.status_code))
+
 '''
 MODE_TASK_SEQ_POST_FAST = '''
+    @seq_task({SEQ})
+    @task({WEIGHT})
+    def test{NUM}(self):
+        body = {POST_BODY}
+        with self.client.{METHOD}('{URL}', json=body, headers=random.choice(headers), catch_response=True) as resp:
+            if resp.status_code == int({EXPECT_CODE}):
+                if b'{EXPECT_STR}' not in resp.content:
+                    resp.failure('Error: wrong response --  ' + resp.content.decode('utf-8'))
+                else:
+                    resp.success()
+            else:
+                resp.failure('Error: wrong status code -- ' + str(resp.status_code))
+
+'''
+MODE_TASKSET_GET_NC = '''
+    @task({WEIGHT})
+    def test{NUM}(self):
+        self.client.{METHOD}('{URL}', headers=random.choice(headers))
+'''
+MODE_TASKSET_POST_NC = '''
+    @task({WEIGHT})
+    def test{NUM}(self):
+        body = {POST_BODY}
+        self.client.{METHOD}('{URL}', json=body, headers=random.choice(headers))
+'''
+MODE_TASK_SEQ_GET_NC = '''
+    @seq_task({SEQ})
+    @task({WEIGHT})
+    def test{NUM}(self):
+        self.client.{METHOD}('{URL}', headers=random.choice(headers))                
+'''
+MODE_TASK_SEQ_POST_NC = '''
     @seq_task({SEQ})
     @task({WEIGHT})
     def test{NUM}(self):
@@ -181,31 +237,49 @@ def make_locustfile(ptfile):
                 ii += 1
                 weight, pt_url, method, body, expect_code, expect_str = each_api
                 if body == '': body = '{}'
-                if expect_code == '': expect_code = '200'
+                if expect_code == '': expect_code = None
                 if expect_str == '': expect_str = ''
                 method = method.lower()
                 if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
-                    locustfile += MODE_TASKSET_GET.format(WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url,
-                                                          EXPECT_CODE=expect_code,
-                                                          EXPECT_STR=expect_str)
+                    if expect_code:
+                        locustfile += MODE_TASKSET_GET.format(WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url,
+                                                              EXPECT_CODE=expect_code,
+                                                              EXPECT_STR=expect_str)
+                    else:
+                        locustfile += MODE_TASKSET_GET_NC.format(WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url)
                 else:
-                    locustfile += MODE_TASKSET_POST.format(WEIGHT=weight, NUM=ii, POST_BODY=body,
-                                                           METHOD=method, URL=pt_url,
-                                                           EXPECT_CODE=expect_code,
-                                                           EXPECT_STR=expect_str
-                                                           )
+                    if expect_code:
+                        locustfile += MODE_TASKSET_POST.format(WEIGHT=weight, NUM=ii, POST_BODY=body,
+                                                               METHOD=method, URL=pt_url,
+                                                               EXPECT_CODE=expect_code,
+                                                               EXPECT_STR=expect_str
+                                                               )
+                    else:
+                        locustfile += MODE_TASKSET_POST_NC.format(WEIGHT=weight, NUM=ii, POST_BODY=body,
+                                                                  METHOD=method, URL=pt_url)
         else:
             ii = 0
             for each_api in pt_api_info:
                 ii += 1
                 weight, pt_url, method, body, expect_code, expect_str = each_api
                 if body == '': body = '{}'
+                if expect_code == '': expect_code = None
+                if expect_str == '': expect_str = ''
                 method = method.lower()
                 if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
-                    locustfile += MODE_TASKSET_GET_FAST.format(WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url)
+                    if expect_code:
+                        locustfile += MODE_TASKSET_GET_FAST.format(WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url,
+                                                                   EXPECT_CODE=expect_code, EXPECT_STR=expect_str)
+                    else:
+                        locustfile += MODE_TASKSET_GET_NC.format(WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url)
                 else:
-                    locustfile += MODE_TASKSET_POST_FAST.format(WEIGHT=weight, NUM=ii, POST_BODY=body,
-                                                                METHOD=method, URL=pt_url)
+                    if expect_code:
+                        locustfile += MODE_TASKSET_POST_FAST.format(WEIGHT=weight, NUM=ii, POST_BODY=body,
+                                                                    METHOD=method, URL=pt_url, EXPECT_CODE=expect_code,
+                                                                    EXPECT_STR=expect_str)
+                    else:
+                        locustfile += MODE_TASKSET_POST_NC.format(WEIGHT=weight, NUM=ii, POST_BODY=body, METHOD=method,
+                                                                  URL=pt_url)
     else:
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSequence')
         if token_type == 'YES':
@@ -221,31 +295,53 @@ def make_locustfile(ptfile):
                 ii += 1
                 weight, pt_url, method, body, expect_code, expect_str = each_api
                 if body == '': body = '{}'
-                if expect_code == '': expect_code = '200'
+                if expect_code == '': expect_code = None
                 if expect_str == '': expect_str = ''
                 method = method.lower()
                 if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
-                    locustfile += MODE_TASK_SEQ_GET.format(SEQ=ii, WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url,
-                                                           EXPECT_CODE=expect_code,
-                                                           EXPECT_STR=expect_str
-                                                           )
+                    if expect_code:
+                        locustfile += MODE_TASK_SEQ_GET.format(SEQ=ii, WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url,
+                                                               EXPECT_CODE=expect_code,
+                                                               EXPECT_STR=expect_str
+                                                               )
+                    else:
+                        locustfile += MODE_TASK_SEQ_GET_NC.format(SEQ=ii, WEIGHT=weight, NUM=ii, METHOD=method,
+                                                                  URL=pt_url)
                 else:
-                    locustfile += MODE_TASK_SEQ_POST.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body, METHOD=method, URL=pt_url,
-                                                            EXPECT_CODE=expect_code,
-                                                            EXPECT_STR=expect_str
-                                                            )
+                    if expect_code:
+                        locustfile += MODE_TASK_SEQ_POST.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body, METHOD=method, URL=pt_url,
+                                                                EXPECT_CODE=expect_code,
+                                                                EXPECT_STR=expect_str
+                                                                )
+                    else:
+                        locustfile += MODE_TASK_SEQ_POST_NC.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body,
+                                                                   METHOD=method, URL=pt_url)
         else:
             ii = 0
             for each_api in pt_api_info:
                 ii += 1
                 weight, pt_url, method, body, expect_code, expect_str = each_api
                 if body == '': body = '{}'
+                if expect_code == '': expect_code = None
+                if expect_str == '': expect_str = ''
                 method = method.lower()
                 if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
-                    locustfile += MODE_TASK_SEQ_GET_FAST.format(SEQ=ii, WEIGHT=weight, NUM=ii, METHOD=method, URL=pt_url)
+                    if expect_code:
+                        locustfile += MODE_TASK_SEQ_GET_FAST.format(SEQ=ii, WEIGHT=weight, NUM=ii, METHOD=method,
+                                                                    URL=pt_url, EXPECT_CODE=expect_code,
+                                                                    EXPECT_STR=expect_str)
+                    else:
+                        locustfile += MODE_TASK_SEQ_GET_NC.format(SEQ=ii, WEIGHT=weight, NUM=ii, METHOD=method,
+                                                                  URL=pt_url)
                 else:
-                    locustfile += MODE_TASK_SEQ_POST_FAST.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body,
-                                                                 METHOD=method, URL=pt_url)
+                    if expect_code:
+                        locustfile += MODE_TASK_SEQ_POST_FAST.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body,
+                                                                     METHOD=method, URL=pt_url,
+                                                                     EXPECT_CODE=expect_code,
+                                                                     EXPECT_STR=expect_str)
+                    else:
+                        locustfile += MODE_TASK_SEQ_POST_NC.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body,
+                                                                   METHOD=method, URL=pt_url)
 
     locustfile += BASIC_LAST.format(HOST=host, MIN_WAIT=min_wait, MAX_WAIT=max_wait, REQUEST_MODE=request_mode)
     locustfile = locustfile.replace('@-', '{')

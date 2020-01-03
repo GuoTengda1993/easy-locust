@@ -38,3 +38,7 @@ https://github.com/GuoTengda1993/easy-locust
 
 Open source licensed under the MIT license (see _LICENSE_ file for details).
 
+
+### Change Log
+
+- 0.1.5: Check Response info (status code & expect str) if set "Expect Status Code" in Excel, otherwise not. Rely on locustio>=0.13.5
