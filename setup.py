@@ -19,6 +19,7 @@ setup(
     version=version,
     description="Extensions for locustio",
     long_description=open(filepath, encoding='utf-8').read(),
+    long_description_content_type='text/markdown',
     classifiers=[
         "Topic :: Software Development :: Testing :: Traffic Generation",
         "Development Status :: 4 - Beta",
