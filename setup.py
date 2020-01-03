@@ -12,12 +12,13 @@ _init_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "easy_locu
 with open(_init_file, 'rb') as f:
     version = str(ast.literal_eval(_version_re.search(
         f.read().decode('utf-8')).group(1)))
+filepath = 'README.md'
 
 setup(
     name='easy-locust',
     version=version,
     description="Extensions for locustio",
-    long_description=open("README.md", encoding='utf-8').read(),
+    long_description=open(filepath, encoding='utf-8').read(),
     classifiers=[
         "Topic :: Software Development :: Testing :: Traffic Generation",
         "Development Status :: 4 - Beta",
@@ -46,4 +47,5 @@ setup(
             'easy-locust = easy_locust.main:main',
         ]
     },
+    data_files=[filepath]
 )
