@@ -154,20 +154,50 @@ MODE_TASK_SEQ_POST_NC = '''
 
 
 def make_locustfile(ptfile):
-    pt_data = PtExcel(ptfile)
-    token_url, token_body, token_para, token_locate = pt_data.auth_info()
-    host, min_wait, max_wait, token_type, run_in_order, request_mode = pt_data.pt_config()
-    pt_api_info = pt_data.pt_api_info()
+    if isinstance(ptfile, dict):
+        file_type = 'dict'
+    elif ptfile.endswith('.xls'):
+        file_type = 'xls'
+    elif ptfile.endswith('.json'):
+        with open(ptfile, 'r') as f:
+            ptfile = json.load(f, encoding='utf-8')
+        file_type = 'dict'
+    if file_type == 'xls':
+        pt_data = PtExcel(ptfile)
+        token_url, token_body, token_para, token_locate = pt_data.auth_info()
+        host, min_wait, max_wait, token_type, run_in_order, request_mode = pt_data.pt_config()
+        pt_api_info = pt_data.pt_api_info()
+    else:
+        configs = ptfile.get('config')
+        host = configs['host']
+        min_wait = configs['min_wait']
+        max_wait = configs['max_wait']
+        request_mode = configs['request_mode']
+        token_type = configs['get_token']
+        run_in_order = configs['run_in_order']
+        if request_mode not in ['FastHttpLocust', 'HttpLocust']:
+            return "ERROR: request_mode must be HttpLocust or FastHttpLocust"
+        if token_type:
+            auth = ptfile.get('auth')
+            token_url = auth['token_url']
+            token_body = auth['body']
+            token_para = auth['key']
+            token_locate = auth['token_index']
+        else:
+            token_url, token_body, token_para, token_locate = None, None, None, None
+
+        pt_api_info = ptfile.get('apis')
+
     if 'UserName' in token_body and 'PassWord' in token_body:
-        user_infos = pt_data.pt_user_info()
+        user_infos = pt_data.pt_user_info() if file_type == 'xls' else ptfile.get('user_info')
     else:
         user_infos = [[None, None]]
 
     locustfile = BASIC_IMPORT.format(USER_INFO=str(user_infos))
 
-    if str(run_in_order) == '0' or run_in_order == 'FALSE':
+    if str(run_in_order) == '0' or run_in_order == 'FALSE' or run_in_order is False:
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSet')
-        if token_type == 'YES':
+        if token_type == 'YES' or token_type is True:
             locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
                                                        TOKEN_BODY=token_body,
                                                        TOKEN_LOCATE=token_locate,
@@ -182,10 +212,24 @@ def make_locustfile(ptfile):
         ii = 0
         for each_api in pt_api_info:
             ii += 1
-            weight, pt_url, method, body, expect_code, expect_str = each_api
+            if file_type == 'xls':
+                weight, pt_url, method, body, expect_code, expect_str = each_api
+                if expect_code == '': expect_code = None
+                if expect_str == '': expect_str = ''
+            else:
+                weight = each_api.get('weight', 100)
+                query = each_api.get('query', None)
+                if not isinstance(query, dict):
+                    return "ERROR: query is not dict in json file"
+                pt_url = each_api['url'] if query is None else urlunparse(each_api['url'], query)
+                method = each_api['method']
+                try:
+                    body = json.dumps(each_api.get('request_data', {}))
+                except:
+                    return "ERROR: request_data should be json format."
+                expect_code = each_api.get('expect_status_code', None)
+                expect_str = each_api.get('expect_str', '')
             if body == '': body = '{}'
-            if expect_code == '': expect_code = None
-            if expect_str == '': expect_str = ''
             method = method.lower()
             if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
                 if expect_code:
@@ -207,7 +251,7 @@ def make_locustfile(ptfile):
                                                               METHOD=method, URL=pt_url, VERIFY=verify)
     else:
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSequence')
-        if token_type == 'YES':
+        if token_type == 'YES' or token_type is True:
             locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
                                                        TOKEN_BODY=token_body,
                                                        TOKEN_LOCATE=token_locate,
@@ -221,10 +265,25 @@ def make_locustfile(ptfile):
         ii = 0
         for each_api in pt_api_info:
             ii += 1
-            weight, pt_url, method, body, expect_code, expect_str = each_api
+            if file_type == 'xls':
+                weight, pt_url, method, body, expect_code, expect_str = each_api
+                if expect_code == '': expect_code = None
+                if expect_str == '': expect_str = ''
+            else:
+                weight = each_api.get('weight', 100)
+                query = each_api.get('query', None)
+                if query is not None and not isinstance(query, dict):
+                    console_logger.error("query is not dict in json file, query will not be parsed to url.")
+                    return None
+                pt_url = each_api['url'] if query is None else urlunparse(each_api['url'], query)
+                method = each_api['method']
+                try:
+                    body = json.dumps(each_api.get('request_data', {}))
+                except:
+                    return "ERROR: request_data should be json format."
+                expect_code = each_api.get('expect_status_code', None)
+                expect_str = each_api.get('expect_str', '')
             if body == '': body = '{}'
-            if expect_code == '': expect_code = None
-            if expect_str == '': expect_str = ''
             method = method.lower()
             if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
                 if expect_code:
@@ -248,6 +307,7 @@ def make_locustfile(ptfile):
     locustfile += BASIC_LAST.format(HOST=host, MIN_WAIT=min_wait, MAX_WAIT=max_wait, REQUEST_MODE=request_mode)
     locustfile = locustfile.replace('@-', '{')
     locustfile = locustfile.replace('-@', '}')
-    l_f = ptfile.replace('.xls', '.py')
-    with open(l_f, 'w', encoding='utf-8') as f:
-        f.writelines(locustfile)
+    return locustfile
+    # l_f = ptfile.replace('.xls', '.py')
+    # with open(l_f, 'w', encoding='utf-8') as f:
+    #     f.writelines(locustfile)

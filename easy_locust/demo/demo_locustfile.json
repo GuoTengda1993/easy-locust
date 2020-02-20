@@ -1,0 +1,38 @@
+{
+  "config": {
+    "host": "",
+    "min_wait": 0,
+    "max_wait": 0,
+    "request_mode": "FastHttpLocust",
+    "get_token": false,
+    "run_in_order": false
+  },
+  "apis": [
+    {
+      "weight": 100,
+      "url": "",
+      "method": "GET",
+      "query": {},
+      "request_data": {},
+      "expect_status_code": null,
+      "expect_str": null
+    }
+  ],
+  "auth": {
+    "token_url": "",
+    "body": "",
+    "key": "X-Auth-Token",
+    "token_index": "Header: X-subject-Token"
+  },
+  "user_info": [
+    ["username", "password"]
+  ],
+  "master_ip": "",
+  "slaves": [
+    {
+      "ip": "",
+      "username": "root",
+      "password": ""
+    }
+  ]
+}

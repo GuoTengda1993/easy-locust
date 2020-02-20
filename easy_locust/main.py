@@ -7,9 +7,9 @@ import socket
 import sys
 import time
 import configargparse
-
+import re
 import gevent
-
+import json
 import locust
 
 from locust import events, runners, web
@@ -306,7 +306,7 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
     parser.add_argument(
         '--xf', '--locustfile-xls',
         dest='xlsfile',
-        help="XLS file, and this file will be transformed to *.py Default: locustfile"
+        help="XLS file or JSON file, and this file will be transformed to *.py Default: locustfile"
     )
 
     parser.add_argument(
@@ -340,9 +340,14 @@ def find_locustfile(locustfile):
     if not (names[0].endswith('.py') and names[0].endswith('.xls')):
         names += [names[0] + '.py']
     # --- Transform Excel to locustfile
-    if names[0].endswith('.xls'):
-        make_locustfile(names[0])
-        names[0] = names[0].replace('.xls', '.py')
+    if names[0].endswith('.xls') or names[0].endswith('.json'):
+        _f = make_locustfile(names[0])
+        if _f.startswith('ERROR:'):
+            console_logger.error(_f)
+            sys.exit(1)
+        names[0] = re.sub('(\.xls)|(\.json)', '.py', names[0])
+        with open(names[0], 'w', encoding='utf-8') as f:
+            f.writelines(_f)
     # Does the name contain path elements?
     if os.path.dirname(names[0]):
         # If so, expand home-directory markers and test for existence
@@ -495,20 +500,29 @@ def main():
             if linux make sure python is installed in /usr/local/lib/''')
             sys.exit(1)
         pt_demo_path = os.path.join(locust_path, 'demo', 'demo_pressuretest.xls')
+        pt_demo_path_json = os.path.join(locust_path, 'demo', 'demo_locustfile.json')
         pt_new_demo = os.path.join(os.getcwd(), 'PtDemo.xls')
+        pt_new_demo_json = os.path.join(os.getcwd(), 'demo.json')
         shutil.copyfile(pt_demo_path, pt_new_demo)
+        shutil.copyfile(pt_demo_path_json, pt_new_demo_json)
         sys.exit(0)
 
     if options.xlsfile:
         pt_file = options.xlsfile
-        if not pt_file.endswith('.xls'):
-            logger.error("PressureTest file must be end with '.xls' and see --help for available options.")
+        if not (pt_file.endswith('.xls') or pt_file.endswith('.json')):
+            logger.error("PressureTest file must be end with '.xls' or '.json' and see --help for available options.")
             sys.exit(1)
         if not os.path.isfile(pt_file):
             logger.error('PressureTest file is not exist, please check it.')
             sys.exit(1)
-        make_locustfile(pt_file)
-        logger.info('Transform XLS to locustfile finish.')
+        _f = make_locustfile(pt_file)
+        if _f.startswith('ERROR:'):
+            console_logger.error(_f)
+            sys.exit(1)
+        _fn = re.sub('(\.xls)|(\.json)', '.py', pt_file)
+        with open(_fn, 'w', encoding='utf-8') as f:
+            f.writelines(_f)
+        logger.info('Transform xls/json to locustfile finish.')
         sys.exit(0)
 
     locustfile = find_locustfile(options.locustfile)
@@ -599,8 +613,16 @@ def main():
         # Add -d for automatically run slaves
         if options.distribute:
             ptpy = locustfile
-            pt_s = PtExcel(options.locustfile)
-            master_ip, pt_slave_info = pt_s.pt_slave()
+            if options.locustfile.endswith('.xls'):
+                _type = 'xls'
+                pt_s = PtExcel(options.locustfile)
+                master_ip, pt_slave_info = pt_s.pt_slave()
+            else:
+                _type = 'dict'
+                with open(options.locustfile, 'r') as f:
+                    _d = json.load(f, encoding='utf-8')
+                master_ip = _d.get('master_ip')
+                pt_slave_info = _d.get('slaves')
             if master_ip == '':
                 logger.error('master IP cannot be None if you use --distribute')
                 sys.exit(1)
@@ -609,7 +631,10 @@ def main():
                     locustfile=ptpy, masteIP=master_ip)
                 thread_pool = []
                 for slave in pt_slave_info:
-                    slave_ip, slave_username, slave_password = slave
+                    if _type == 'xls':
+                        slave_ip, slave_username, slave_password = slave
+                    else:
+                        slave_ip, slave_username, slave_password = slave['ip'], slave['username'], slave['password']
                     _t = Thread(target=pt_slave,
                                 args=(slave_ip, slave_username, slave_password, ptpy, locust_cli_slave))
                     logger.info('Prepare slave {}'.format(slave_ip))
@@ -662,7 +687,6 @@ def main():
     if options.csvfilebase:
         gevent.spawn(stats_writer, options.csvfilebase, options.stats_history_enabled)
 
-    
     def shutdown(code=0):
         """
         Shut down locust by firing quitting event, printing/writing stats and exiting

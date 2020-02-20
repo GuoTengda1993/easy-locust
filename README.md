@@ -23,6 +23,21 @@ Same parameters with locust, so I just introduce the different parameters here:
 
 `easy-locust -f xxx.xls --master -d` -- `-d` is distributed mode, can automatically run slaves. There is one precondition, you need write slaves information in Excel at Slave Sheet.
 
+OR, use:
+```python
+import easy_locust
+
+data = {
+    "config": {},
+    "apis": [],
+    "auth": {},
+    "user_info": [],
+    "master_ip": "",
+    "slaves": []
+}
+
+locustfile_str = easy_locust.factory(data)
+```
 
 ## Bug reporting
 
@@ -40,5 +55,6 @@ Open source licensed under the MIT license (see _LICENSE_ file for details).
 
 
 ### Change Log
+- 0.1.9: Support Json to locustfile. And can use `easy_locust.factory(dict)` to get strings of locustfile. 
 - 0.1.6: Optimize locustFileFactory.py
 - 0.1.5: Check Response info (status code & expect str) if set "Expect Status Code" in Excel, otherwise not. Rely on locustio>=0.13.5
