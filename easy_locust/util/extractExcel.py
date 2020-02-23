@@ -14,45 +14,11 @@ def urlunparse(prefix, query):
     return prefix.strip('&')
 
 
-class HandleExcel:
+class PtExcel:
+
     def __init__(self, filename):
         self.filename = filename
         self.workbook = xlrd.open_workbook(self.filename)
-
-    def url_parameter(self):
-        url_para_sheet = self.workbook.sheet_by_index(1)
-        nrows = url_para_sheet.nrows
-        url_para = {}
-        for i in range(1, nrows):
-            key = url_para_sheet.cell_value(i, 0)
-            value = url_para_sheet.cell_value(i, 1)
-            if not isinstance(value, str):
-                value = str(int(value))
-            url_para[key] = value
-        return url_para
-
-    def request_parameter(self):
-        url_para_sheet = self.workbook.sheet_by_index(2)
-        nrows = url_para_sheet.nrows
-        req_para = {}
-        for i in range(1, nrows):
-            key = url_para_sheet.cell_value(i, 0)
-            value = url_para_sheet.cell_value(i, 1)
-            if not isinstance(value, str):
-                value = str(int(value))
-            req_para[key] = value
-        return req_para
-
-    def auth_info(self):
-        auth_sheet = self.workbook.sheet_by_name('AuthInfo')
-        token_url = auth_sheet.cell_value(0, 1)
-        body = auth_sheet.cell_value(1, 1)
-        token_para = auth_sheet.cell_value(2, 0)
-        token_locate = auth_sheet.cell_value(2, 1)
-        return token_url, body, token_para, token_locate
-
-
-class PtExcel(HandleExcel):
 
     def pt_config(self):
         pt_sheet = self.workbook.sheet_by_name('PT')
@@ -125,8 +91,10 @@ class PtExcel(HandleExcel):
             user_infos.append([username, password])
         return user_infos
 
-    def url_parameter(self):
-        pass
-
-    def request_parameter(self):
-        pass
+    def auth_info(self):
+        auth_sheet = self.workbook.sheet_by_name('AuthInfo')
+        token_url = auth_sheet.cell_value(0, 1)
+        body = auth_sheet.cell_value(1, 1)
+        token_para = auth_sheet.cell_value(2, 0)
+        token_locate = auth_sheet.cell_value(2, 1)
+        return token_url, body, token_para, token_locate

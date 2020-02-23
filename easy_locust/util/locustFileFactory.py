@@ -308,6 +308,3 @@ def make_locustfile(ptfile):
     locustfile = locustfile.replace('@-', '{')
     locustfile = locustfile.replace('-@', '}')
     return locustfile
-    # l_f = ptfile.replace('.xls', '.py')
-    # with open(l_f, 'w', encoding='utf-8') as f:
-    #     f.writelines(locustfile)

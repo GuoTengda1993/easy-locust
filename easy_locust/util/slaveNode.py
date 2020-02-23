@@ -51,10 +51,3 @@ class ConnectSlave:
                 pid = re.split('\s+', each)[1]
                 break
         return pid
-
-
-if __name__ == '__main__':
-    c = ConnectSlave('192.168.37.130', 'root', '1q2w3e4r5t')
-    out = c.remote_command('nohup locust -f /root/PtDemo.py --slave --master-host=192.168.31.189 > /dev/null 2>&1 &')
-    print(out.read())
-    print(type(out))
