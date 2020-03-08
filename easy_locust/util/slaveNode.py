@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
 import logging
 import paramiko
 
@@ -10,21 +9,22 @@ class ConnectSlave:
         self.ip = ip
         self.username = username
         self.password = password
+        trans = paramiko.Transport((self.ip, 22))
+        trans.connect(username=self.username, password=self.password)
+        self.ft = paramiko.SFTPClient.from_transport(trans)
+        self.ssh = paramiko.SSHClient()
+        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.ssh.connect(hostname=self.ip, port=22, username=self.username, password=self.password)
 
     def trans_file(self, source, dest):
         trans = paramiko.Transport((self.ip, 22))
         trans.connect(username=self.username, password=self.password)
         ft = paramiko.SFTPClient.from_transport(trans)
         ft.put(localpath=source, remotepath=dest)
-        ft.close()
 
     def remote_command(self, command):
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(hostname=self.ip, port=22, username=self.username, password=self.password)
-        stdin, stdout, stderr = ssh.exec_command(command)
+        stdin, stdout, stderr = self.ssh.exec_command(command)
         error = stderr.read()
-        ssh.close()
         if error:
             return 0
         else:
@@ -42,12 +42,12 @@ class ConnectSlave:
         else:
             return 1
 
-    def get_pid(self, keyword):
-        all_pid = self.remote_command('ps -aux')
-        pid_list = all_pid.readlines()
-        pid = 0
-        for each in pid_list:
-            if keyword in each:
-                pid = re.split('\s+', each)[1]
-                break
-        return pid
+    def check_boomer_client(self):
+        res = self.remote_command('ls -l /root/')
+        if b'client_v1' in res.read():
+            return 1
+        return 0
+
+    def close(self):
+        self.ft.close()
+        self.ssh.close()

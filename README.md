@@ -21,7 +21,11 @@ Same parameters with locust, so I just introduce the different parameters here:
 
 `easy-locust --xf xxx.xls` -- -- This just transform Excel to locustfile, will not start test.
 
-`easy-locust -f xxx.xls --master -d` -- `-d` is distributed mode, can automatically run slaves. There is one precondition, you need write slaves information in Excel at Slave Sheet.
+`easy-locust -f xxx.xls --master -d` -- `-d` is distributed mode, can automatically run slaves. There is one precondition, 
+you need write slaves information in Excel at Slave Sheet.
+
+`easy-locust -f xxx.xls --master -d --boomer` -- `--boomer` running boomer client in slaves, which is compiling by Golang. 
+In this mode expect_code and expect_str is inoperative. Please keep port 9999 is unused in each slave, when using this mode.
 
 OR, use:
 ```python
@@ -55,6 +59,7 @@ Open source licensed under the MIT license (see _LICENSE_ file for details).
 
 
 ### Change Log
+- 0.1.11: Add boomer client as slave, which has much more preformance.
 - 0.1.10: Delete useless code.
 - 0.1.9: Support Json to locustfile. And can use `easy_locust.factory(dict)` to get strings of locustfile. 
 - 0.1.6: Optimize locustFileFactory.py

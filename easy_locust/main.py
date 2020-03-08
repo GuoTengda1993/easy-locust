@@ -22,10 +22,12 @@ from locust.stats import (print_error_report, print_percentile_stats, print_stat
 from locust.util.timespan import parse_timespan
 
 import shutil
+import requests
 from threading import Thread
 from .util.locustFileFactory import make_locustfile
 from .util.slaveNode import ConnectSlave
 from .util.extractExcel import PtExcel
+from .util.boomer_client import gen_boomer_client_json
 
 
 _internals = [Locust, HttpLocust]
@@ -317,6 +319,14 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
         help="Distribute tasks to slaves defined in XLS."
     )
 
+    parser.add_argument(
+        '--boomer',
+        action='store_true',
+        dest='boomer',
+        default=False,
+        help="Run boomer client in slaves."
+    )
+
     return parser, parser.parse_args(args=args)
 
 
@@ -474,13 +484,37 @@ def get_locust_path():
 # New feature: connect slave and distribute task
 def pt_slave(ip, username, password, ptfile, ptcommand):
     connect = ConnectSlave(ip, username, password)
-    is_locust = connect.check_locust()
-    if is_locust:
+    check = connect.check_locust()
+    if check:
         dest = '/root/' + ptfile
         connect.trans_file(source=ptfile, dest=dest)
         connect.remote_command(command=ptcommand)
+        connect.close()
     else:
         logging.error('Slave {} cannot run locust.'.format(ip))
+
+
+def pt_slave_boomer(ip, username, password, file_list, command, targets_data):
+    connect = ConnectSlave(ip, username, password)
+    check = connect.check_boomer_client()
+    if check:
+        file_list.pop()
+    for f in file_list:
+        dest = 'client_v1' if 'client_v1' in f else f
+        connect.trans_file(source=f, dest=dest)
+    api_run = 'http://{}:9999/target'.format(ip)
+    api_heartbeat = 'http://{}:9999/heartbeat'.format(ip)
+    api_shutdown = 'http://{}:9999/shutdown'.format(ip)
+    try:
+        requests.get(api_heartbeat)
+        requests.get(api_shutdown)
+    except requests.exceptions.ConnectionError:
+        connect.remote_command(command='chmod a+x client_v1')
+        connect.remote_command(command=command)
+        time.sleep(1)
+    finally:
+        connect.close()
+        requests.post(api_run, json=targets_data)
 
 
 def main():
@@ -627,26 +661,53 @@ def main():
             if master_ip == '':
                 logger.error('master IP cannot be None if you use --distribute')
                 sys.exit(1)
-            try:
-                locust_cli_slave = 'nohup locust -f /root/{locustfile} --slave --master-host={masteIP} > /dev/null 2>&1 &'.format(
-                    locustfile=ptpy, masteIP=master_ip)
+            if options.boomer:
+                locust_cli_slave = 'nohup ./client_v1 --web --master-host={masteIP} > /dev/null 2>&1 &'.format(masteIP=master_ip)
+                targets_dict, file_list = gen_boomer_client_json(options.locustfile)
+                boomer_client_file = os.path.join(locust_path, 'boomer_client', 'client_v1')
+                file_list.append(boomer_client_file)
                 thread_pool = []
-                for slave in pt_slave_info:
-                    if _type == 'xls':
-                        slave_ip, slave_username, slave_password = slave
-                    else:
-                        slave_ip, slave_username, slave_password = slave['ip'], slave['username'], slave['password']
-                    _t = Thread(target=pt_slave,
-                                args=(slave_ip, slave_username, slave_password, ptpy, locust_cli_slave))
-                    logger.info('Prepare slave {}'.format(slave_ip))
-                    thread_pool.append(_t)
-                    _t.start()
-                for each_t in thread_pool:
-                    each_t.join()
-            except KeyboardInterrupt:
-                pass
-            except Exception as e:
-                logger.error('Must something happened, collect Exceptions here: {}'.format(e))
+                try:
+                    for slave in pt_slave_info:
+                        if _type == 'xls':
+                            slave_ip, slave_username, slave_password = slave
+                        else:
+                            slave_ip, slave_username, slave_password = slave['ip'], slave['username'], slave['password']
+                        _t = Thread(target=pt_slave_boomer,
+                                    args=(slave_ip, slave_username, slave_password, file_list, locust_cli_slave, targets_dict))
+                        logger.info('Prepare slave {}'.format(slave_ip))
+                        thread_pool.append(_t)
+                        _t.start()
+                    for each_t in thread_pool:
+                        each_t.join()
+                    file_list.pop()
+                    for each in file_list:
+                        os.remove(each)
+                except KeyboardInterrupt:
+                    pass
+                except Exception as e:
+                    logger.error('Something happened, collect Exceptions here: {}'.format(e))
+            else:
+                try:
+                    locust_cli_slave = 'nohup locust -f /root/{locustfile} --slave --master-host={masteIP} > /dev/null 2>&1 &'.format(
+                        locustfile=ptpy, masteIP=master_ip)
+                    thread_pool = []
+                    for slave in pt_slave_info:
+                        if _type == 'xls':
+                            slave_ip, slave_username, slave_password = slave
+                        else:
+                            slave_ip, slave_username, slave_password = slave['ip'], slave['username'], slave['password']
+                        _t = Thread(target=pt_slave,
+                                    args=(slave_ip, slave_username, slave_password, ptpy, locust_cli_slave))
+                        logger.info('Prepare slave {}'.format(slave_ip))
+                        thread_pool.append(_t)
+                        _t.start()
+                    for each_t in thread_pool:
+                        each_t.join()
+                except KeyboardInterrupt:
+                    pass
+                except Exception as e:
+                    logger.error('Something happened, collect Exceptions here: {}'.format(e))
 
         runners.locust_runner = MasterLocustRunner(locust_classes, options)
     elif options.slave:
