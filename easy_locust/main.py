@@ -486,7 +486,7 @@ def pt_slave(ip, username, password, ptfile, ptcommand):
     connect = ConnectSlave(ip, username, password)
     check = connect.check_locust()
     if check:
-        dest = '/root/' + ptfile
+        dest = '/root/locust_client.py'
         connect.trans_file(source=ptfile, dest=dest)
         connect.remote_command(command=ptcommand)
         connect.close()
@@ -689,8 +689,8 @@ def main():
                     logger.error('Something happened, collect Exceptions here: {}'.format(e))
             else:
                 try:
-                    locust_cli_slave = 'nohup locust -f /root/{locustfile} --slave --master-host={masteIP} > /dev/null 2>&1 &'.format(
-                        locustfile=ptpy, masteIP=master_ip)
+                    locust_cli_slave = 'nohup locust -f /root/locust_client.py --slave --master-host={masteIP} > /dev/null 2>&1 &'\
+                        .format(masteIP=master_ip)
                     thread_pool = []
                     for slave in pt_slave_info:
                         if _type == 'xls':
@@ -781,5 +781,5 @@ def main():
         if len(runners.locust_runner.errors) or len(runners.locust_runner.exceptions):
             code = options.exit_code_on_error
         shutdown(code=code)
-    except KeyboardInterrupt as e:
+    except KeyboardInterrupt:
         shutdown(0)
