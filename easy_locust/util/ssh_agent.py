@@ -3,21 +3,29 @@ import logging
 import paramiko
 
 
-class ConnectSlave:
+class SSHAgent:
 
-    def __init__(self, ip, username, password):
+    def __init__(self, ip, username, password, port=22):
         self.ip = ip
         self.username = username
         self.password = password
-        trans = paramiko.Transport((self.ip, 22))
+        self.port = port
+        trans = paramiko.Transport((self.ip, self.port))
         trans.connect(username=self.username, password=self.password)
         self.ft = paramiko.SFTPClient.from_transport(trans)
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(hostname=self.ip, port=22, username=self.username, password=self.password)
+        self.ssh.connect(hostname=self.ip, port=self.port, username=self.username, password=self.password)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.ssh.close()
+        self.ft.close()
 
     def trans_file(self, source, dest):
-        trans = paramiko.Transport((self.ip, 22))
+        trans = paramiko.Transport((self.ip, self.port))
         trans.connect(username=self.username, password=self.password)
         ft = paramiko.SFTPClient.from_transport(trans)
         ft.put(localpath=source, remotepath=dest)
@@ -26,9 +34,8 @@ class ConnectSlave:
         stdin, stdout, stderr = self.ssh.exec_command(command)
         error = stderr.read()
         if error:
-            return 0
-        else:
-            return stdout
+            return False
+        return stdout.read().decode('utf-8')
 
     def check_locust(self):
         res = self.remote_command('locust -h')
@@ -36,17 +43,16 @@ class ConnectSlave:
             pipit = self.remote_command('pip install locustio')
             if not pipit:
                 logging.error('Can not install locustio in this slave: {}'.format(self.ip))
-                return 0
+                return False
             else:
-                return 1
-        else:
-            return 1
+                return True
+        return True
 
     def check_boomer_client(self):
         res = self.remote_command('ls -l /root/')
-        if b'client_v1' in res.read():
-            return 1
-        return 0
+        if 'client_v1' in res:
+            return True
+        return False
 
     def close(self):
         self.ft.close()

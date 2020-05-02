@@ -25,7 +25,7 @@ import shutil
 import requests
 from threading import Thread
 from .util.locustFileFactory import make_locustfile
-from .util.slaveNode import ConnectSlave
+from .util.ssh_agent import SSHAgent
 from .util.extractExcel import PtExcel
 from .util.boomer_client import gen_boomer_client_json
 
@@ -483,19 +483,19 @@ def get_locust_path():
 
 # New feature: connect slave and distribute task
 def pt_slave(ip, username, password, ptfile, ptcommand):
-    connect = ConnectSlave(ip, username, password)
-    check = connect.check_locust()
-    if check:
-        dest = '/root/locust_client.py'
-        connect.trans_file(source=ptfile, dest=dest)
-        connect.remote_command(command=ptcommand)
-        connect.close()
-    else:
-        logging.error('Slave {} cannot run locust.'.format(ip))
+    connect = SSHAgent(ip, username, password)
+    with connect:
+        check = connect.check_locust()
+        if check:
+            dest = '/root/locust_client.py'
+            connect.trans_file(source=ptfile, dest=dest)
+            connect.remote_command(command=ptcommand)
+        else:
+            logging.error('Slave {} cannot run locust.'.format(ip))
 
 
 def pt_slave_boomer(ip, username, password, file_list, command, targets_data):
-    connect = ConnectSlave(ip, username, password)
+    connect = SSHAgent(ip, username, password)
     check = connect.check_boomer_client()
     if check:
         file_list.pop()

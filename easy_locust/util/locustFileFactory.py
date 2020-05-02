@@ -16,7 +16,8 @@ from requests.packages import urllib3
 
 urllib3.disable_warnings()
 
-
+'''
+BASIC_TOKEN = '''
 def get_token(url, body, locate):
     try:
         response = requests.post(url=url, json=body, verify=False)
@@ -63,13 +64,13 @@ MODE_TOKEN_FIRST_TIME = '''
             UserName, PassWord = each[0], each[1]
             body = {TOKEN_BODY}
             token = get_token(url='{TOKEN_URL}', body=body, locate='{TOKEN_LOCATE}')
-            header = @-'Content-Type': 'application/json', '{TOKEN_PARAM}': token-@
+            header = @-'Content-Type': '{CONTENT_TYPE}', '{TOKEN_PARAM}': token-@
             headers.append(header)
 '''
 MODE_TOKEN_NEVER = '''
     def setup(self):
         global headers
-        headers = [{"Content-Type": "application/json"}]
+        headers = [{"Content-Type": "{CONTENT_TYPE}"}]
 '''
 MODE_TASKSET_GET = '''
     @task({WEIGHT})
@@ -165,7 +166,7 @@ def make_locustfile(ptfile):
     if file_type == 'xls':
         pt_data = PtExcel(ptfile)
         token_url, token_body, token_para, token_locate = pt_data.auth_info()
-        host, min_wait, max_wait, token_type, run_in_order, request_mode = pt_data.pt_config()
+        host, min_wait, max_wait, token_type, run_in_order, request_mode, content_type = pt_data.pt_config()
         pt_api_info = pt_data.pt_api_info()
     else:
         configs = ptfile.get('config')
@@ -175,6 +176,7 @@ def make_locustfile(ptfile):
         request_mode = configs['request_mode']
         token_type = configs['get_token']
         run_in_order = configs['run_in_order']
+        content_type = configs['content_type']
         if request_mode not in ['FastHttpLocust', 'HttpLocust']:
             return "ERROR: request_mode must be HttpLocust or FastHttpLocust"
         if token_type:
@@ -198,12 +200,14 @@ def make_locustfile(ptfile):
     if str(run_in_order) == '0' or run_in_order == 'FALSE' or run_in_order is False:
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSet')
         if token_type == 'YES' or token_type is True:
+            locustfile += BASIC_TOKEN
             locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
                                                        TOKEN_BODY=token_body,
                                                        TOKEN_LOCATE=token_locate,
-                                                       TOKEN_PARAM=token_para)
+                                                       TOKEN_PARAM=token_para,
+                                                       CONTENT_TYPE=content_type)
         else:
-            locustfile += MODE_TOKEN_NEVER
+            locustfile += MODE_TOKEN_NEVER.format(CONTENT_TYPE=content_type)
 
         if request_mode == 'HttpLocust':
             verify = 'verify=False, '
@@ -223,13 +227,9 @@ def make_locustfile(ptfile):
                     return "ERROR: query is not dict in json file"
                 pt_url = each_api['url'] if query is None else urlunparse(each_api['url'], query)
                 method = each_api['method']
-                try:
-                    body = json.dumps(each_api.get('request_data', {}))
-                except:
-                    return "ERROR: request_data should be json format."
+                body = each_api['request_data']
                 expect_code = each_api.get('expect_status_code', None)
                 expect_str = each_api.get('expect_str', '')
-            if body == '': body = '{}'
             method = method.lower()
             if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
                 if expect_code:
@@ -252,12 +252,14 @@ def make_locustfile(ptfile):
     else:
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSequence')
         if token_type == 'YES' or token_type is True:
+            locustfile += BASIC_TOKEN
             locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
                                                        TOKEN_BODY=token_body,
                                                        TOKEN_LOCATE=token_locate,
-                                                       TOKEN_PARAM=token_para)
+                                                       TOKEN_PARAM=token_para,
+                                                       CONTENT_TYPE=content_type)
         else:
-            locustfile += MODE_TOKEN_NEVER
+            locustfile += MODE_TOKEN_NEVER.format(CONTENT_TYPE=content_type)
         if request_mode == 'HttpLocust':
             verify = 'verify=False, '
         else:
@@ -277,13 +279,9 @@ def make_locustfile(ptfile):
                     return None
                 pt_url = each_api['url'] if query is None else urlunparse(each_api['url'], query)
                 method = each_api['method']
-                try:
-                    body = json.dumps(each_api.get('request_data', {}))
-                except:
-                    return "ERROR: request_data should be json format."
+                body = each_api['request_data']
                 expect_code = each_api.get('expect_status_code', None)
                 expect_str = each_api.get('expect_str', '')
-            if body == '': body = '{}'
             method = method.lower()
             if method == 'get' or method == 'delete' or method == 'head' or method == 'options':
                 if expect_code:
@@ -296,9 +294,9 @@ def make_locustfile(ptfile):
                                                               URL=pt_url)
             else:
                 if expect_code:
-                    locustfile += MODE_TASK_SEQ_POST.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body, METHOD=method, URL=pt_url,
-                                                            EXPECT_CODE=expect_code,
-                                                            EXPECT_STR=expect_str, VERIFY=verify
+                    locustfile += MODE_TASK_SEQ_POST.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body, METHOD=method,
+                                                            URL=pt_url, EXPECT_CODE=expect_code, EXPECT_STR=expect_str,
+                                                            VERIFY=verify
                                                             )
                 else:
                     locustfile += MODE_TASK_SEQ_POST_NC.format(SEQ=ii, WEIGHT=weight, NUM=ii, POST_BODY=body,

@@ -42,7 +42,8 @@ class PtExcel:
 
         token_type = pt_sheet.cell_value(4, 1)
         run_in_order = pt_sheet.cell_value(5, 1)
-        return host, min_wait, max_wait, token_type, run_in_order, request_mode
+        content_type = pt_sheet.cell_value(6, 1)
+        return host, min_wait, max_wait, token_type, run_in_order, request_mode, content_type
 
     def pt_api_info(self):
         pt_sheet = self.workbook.sheet_by_name('PT')

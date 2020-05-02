@@ -59,6 +59,7 @@ Open source licensed under the MIT license (see _LICENSE_ file for details).
 
 
 ### Change Log
+- 0.1.12: Add `content-type` support
 - 0.1.11: Add boomer client as slave, which has much more preformance.
 - 0.1.10: Delete useless code.
 - 0.1.9: Support Json to locustfile. And can use `easy_locust.factory(dict)` to get strings of locustfile. 
