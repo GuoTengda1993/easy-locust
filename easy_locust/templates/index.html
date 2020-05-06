@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Easy Locust</title>
+    <link rel="stylesheet" type="text/css" href="../static/css/bootstrap.css" media="screen">
+</head>
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#main" data-toggle="tab">Easy-Locust</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+          <li><a href="#config" data-toggle="tab">Config</a></li>
+          <li><a href="#apis" data-toggle="tab">APIs</a></li>
+          <li><a href="#slaves" data-toggle="tab">Slaves</a></li>
+          <li><a href="#auth" data-toggle="tab">Auth</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container tab-content">
+      <div class="row tab-pane active" id="main">
+        <div class="col-sm-4">
+          <h2>关于我</h2>
+          <h5>我的照片:</h5>
+          <div class="fakeimg">这边插入图像</div>
+          <p>关于我的介绍..</p>
+          <h3>链接</h3>
+          <p>描述文本。</p>
+          <ul class="nav nav-pills nav-stacked">
+            <li class="active"><a href="#">链接 1</a></li>
+            <li><a href="#">链接 2</a></li>
+            <li><a href="#">链接 3</a></li>
+          </ul>
+          <hr class="hidden-sm hidden-md hidden-lg">
+        </div>
+        <div class="col-sm-8">
+          <h2>标题</h2>
+          <h5>副标题</h5>
+          <div class="fakeimg">图像</div>
+          <p>一些文本..</p>
+          <p>菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！</p>
+          <br>
+          <h2>标题</h2>
+          <h5>副标题</h5>
+          <div class="fakeimg">图像</div>
+          <p>一些文本..</p>
+          <p>菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！</p>
+        </div>
+      </div>
+    <div class="row tab-pane" id="config">
+        <h2>Config</h2>
+    </div>
+    <div class="row tab-pane" id="apis">
+        <div class="col-md-3">
+            <h2>APIs</h2>
+        </div>
+        <div class="col-md-offset-0" style="margin-top: 18px">
+            <a class="btn btn-primary" href="#add_api" role="button" data-toggle="modal">Add</a>
+        </div>
+    </div>
+    <div class="row tab-pane" id="slaves">
+        <div class="col-md-3">
+            <h2>Slave Nodes</h2>
+        </div>
+        <div class="col-md-offset-0" style="margin-top: 18px">
+            <a class="btn btn-primary" href="#add_slave" role="button" data-toggle="modal">Add</a>
+        </div>
+    </div>
+    <div class="row tab-pane" id="auth">
+        <h2>Auth</h2>
+    </div>
+</div>
+
+<!--model-->
+<div class="modal fade" id="add_api" tabindex="-1" style="margin-top: 100px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Add New API</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="url" class="col-sm-3 control-label">Url:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" name="url" class="form-control" id="url"
+                                   placeholder="\easy-locust\test">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="weight" class="col-sm-3 control-label">Weight:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" class="form-control" id="weight" name="weight"
+                                   placeholder="Please input the weight, default: 100.">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="method" class="col-sm-3 control-label">Method:</label>
+                        <div class="col-sm-3">
+                            <select class="form-control" id="method">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="query" class="col-sm-3 control-label">Query:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" name="query" class="form-control" id="query"
+                                   placeholder='Json format: {"key": "value"}'>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="request-data" class="col-sm-3 control-label">Request Data:</label>
+                        <div class="col-sm-8">
+                            <input type="textarea" value="" name="request-data" class="form-control" id="request-data">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="expect-code" class="col-sm-3 control-label">Expect Status Code:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" name="expect-code" class="form-control" id="expect-code"
+                                   placeholder='200, default is None'>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="expect-str" class="col-sm-3 control-label">Expect Str:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" name="expect-str" class="form-control" id="expect-str"
+                                   placeholder='default is None'>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="post_api('/api')">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="add_slave" tabindex="-1" style="margin-top: 100px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Add Slave Node</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="ip" class="col-sm-3 control-label">IP:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" name="ip" class="form-control" id="ip"
+                                   placeholder="10.0.0.2">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="username" class="col-sm-3 control-label">Username:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" class="form-control" id="username" name="username"
+                                   placeholder="Please input the username, default: root.">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="col-sm-3 control-label">Password:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" name="password" class="form-control" id="password">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="post_slave('/slave')">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="add_config" tabindex="-1" style="margin-top: 100px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Add Config</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="host" class="col-sm-3 control-label">Host:</label>
+                        <div class="col-sm-8">
+                            <input type="text" value="" name="host" class="form-control" id="host"
+                                   placeholder="Please input the host">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="min-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
+                        <div class="col-sm-8">
+                            <input type="text" value=0 class="form-control" id="min-wait" name="min-wait"
+                                   placeholder="Please input the min wait time, default: 0.">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="max-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
+                        <div class="col-sm-8">
+                            <input type="text" value=0 class="form-control" id="max-wait" name="max-wait"
+                                   placeholder=">= min-wait-time, default: 0.">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="request-mode" class="col-sm-3 control-label">Request Mode:</label>
+                        <div class="col-sm-3">
+                            <select class="form-control" id="request-mode">
+                                <option value="FastHttpLocust">FastHttpLocust</option>
+                                <option value="HttpLocust">HttpLocust</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="token" class="col-sm-3 control-label">Token:</label>
+                        <div class="col-sm-3">
+                            <select class="form-control" id="token">
+                                <option value=1>Yes</option>
+                                <option value=0>Never</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="run-in-order" class="col-sm-3 control-label">Run in Order:</label>
+                        <div class="col-sm-3">
+                            <select class="form-control" id="run-in-order">
+                                <option value=1>Yes</option>
+                                <option value=0>No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="content-type" class="col-sm-3 control-label">Content-Type:</label>
+                        <div class="col-sm-3">
+                            <select class="form-control" id="content-type">
+                                <option value="application/json">application/json</option>
+                                <option value="application/xml">application/xml</option>
+                                <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                                <option value="multipart/form-data">multipart/form-data</option>
+                                <option value="text/html">text/html</option>
+                                <option value="text/plain">text/plain</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="post_config('/config')">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript" src="../static/js/jquery-3.5.0.min.js"></script>
+<script type="text/javascript" src="../static/js/bootstrap.js"></script>
+<script type="text/javascript" src="../static/js/common.js"></script>
+
+</body>
+</html>
