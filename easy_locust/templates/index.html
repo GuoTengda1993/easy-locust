@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Easy Locust</title>
     <link rel="stylesheet" type="text/css" href="../static/css/bootstrap.css" media="screen">
+    <link href="../static/css/common.css" rel="stylesheet">
 </head>
 <body>
 
@@ -22,7 +23,7 @@
           <li><a href="#config" data-toggle="tab">Config</a></li>
           <li><a href="#apis" data-toggle="tab">APIs</a></li>
           <li><a href="#slaves" data-toggle="tab">Slaves</a></li>
-          <li><a href="#auth" data-toggle="tab">Auth</a></li>
+          <!--<li><a href="#auth" data-toggle="tab">Auth</a></li>-->
       </ul>
     </div>
   </div>
@@ -60,6 +61,75 @@
       </div>
     <div class="row tab-pane" id="config">
         <h2>Config</h2>
+            <form class="form-horizontal">
+                <div class="form-group">
+                    <label for="host" class="col-sm-3 control-label">Host:</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" name="host" class="form-control" id="host"
+                               placeholder="Please input the host">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="min-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
+                    <div class="col-sm-8">
+                        <input type="text" value=0 class="form-control" id="min-wait" name="min-wait"
+                               placeholder="Please input the min wait time, default: 0.">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="max-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
+                    <div class="col-sm-8">
+                        <input type="text" value=0 class="form-control" id="max-wait" name="max-wait"
+                               placeholder=">= min-wait-time, default: 0.">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="request-mode" class="col-sm-3 control-label">Request Mode:</label>
+                    <div class="col-sm-3">
+                        <select class="form-control" id="request-mode">
+                            <option value="FastHttpLocust">FastHttpLocust</option>
+                            <option value="HttpLocust">HttpLocust</option>
+                        </select>
+                    </div>
+                </div>
+                <!--<div class="form-group">-->
+                    <!--<label for="token" class="col-sm-3 control-label">Token:</label>-->
+                    <!--<div class="col-sm-3">-->
+                        <!--<select class="form-control" id="token">-->
+                            <!--<option value=1>Yes</option>-->
+                            <!--<option value=0>Never</option>-->
+                        <!--</select>-->
+                    <!--</div>-->
+                <!--</div>-->
+                <div class="form-group">
+                    <label for="run-in-order" class="col-sm-3 control-label">Run in Order:</label>
+                    <div class="col-sm-3">
+                        <select class="form-control" id="run-in-order">
+                            <option value=1>Yes</option>
+                            <option value=0>No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="content-type" class="col-sm-3 control-label">Content-Type:</label>
+                    <div class="col-sm-3">
+                        <select class="form-control" id="content-type">
+                            <option value="application/json">application/json</option>
+                            <option value="application/xml">application/xml</option>
+                            <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+                            <option value="multipart/form-data">multipart/form-data</option>
+                            <option value="text/html">text/html</option>
+                            <option value="text/plain">text/plain</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-3 col-sm-10">
+                        <button type="button" class="btn btn-primary" onclick="put_config('/config')">Save</button>
+                    </div>
+                </div>
+
+            </form>
     </div>
     <div class="row tab-pane" id="apis">
         <div class="col-md-3">
@@ -68,7 +138,48 @@
         <div class="col-md-offset-0" style="margin-top: 18px">
             <a class="btn btn-primary" href="#add_api" role="button" data-toggle="modal">Add</a>
         </div>
+        {% if apis %}
+        {% for api in apis %}
+            {% if api.method|lower == 'post' %}
+                <div class="block block_post">
+                    <span class="block-method block_method_post block_method_color"
+                          onclick="collapse_api('#collapse_api_{{ api.id }}'); make_editor('code_{{ api.id }}')">POST</span>
+            {% elif api.method|lower == ('get' or 'head') %}
+                <div class="block block_get">
+                    <span class="block-method block_method_get block_method_color"
+                          onclick="collapse_api('#collapse_api_{{ api.id }}'); make_editor('code_{{ api.id }}')">GET</span>
+            {% elif api.method|lower == ('put' or 'patch') %}
+                <div class="block block_put">
+                    <span class="block-method block_method_put block_method_color"
+                          onclick="collapse_api('#collapse_api_{{ api.id }}'); make_editor('code_{{ api.id }}')">PUT</span>
+            {% elif api.method|lower == 'delete' %}
+                <div class="block block_delete">
+                    <span class="block-method block_method_delete block_method_color"
+                          onclick="collapse_api('#collapse_api_{{ api.id }}'); make_editor('code_{{ api.id }}')">DELETE</span>
+            {% endif %}
+                <span class="block-method block_url">{{ api.url }}</span>
+                <span class="block-summary-description">Weight: {{ api.weight }}</span>
+                <button class="btn btn-primary" onclick="put_api('/api/{{ api.id }}/')">Save</button>
+            {% if api.status == 0 %}
+                <button class="btn btn-primary" onclick="operate_api('/api/{{ api.id }}/enable')">Enable</button>
+            {% else %}
+                <button class="btn btn-warning" onclick="operate_api('/api/{{ api.id }}/disable')">Disable</button>
+            {% endif % }
+                <button class="btn btn-danger" style="margin-left: 5px" onclick="del_api('/api/{{ api.id }}/')">Del</button>
+            </div>
+             <div class="block_body collapse" id="collapse_api_{{ api.id }}">
+                <pre id="code_{{ api.id }}" class="ace_editor" style="min-height: 400px">
+                    <textarea>{{ api.extra }}</textarea>
+                </pre>
+             </div>
+        {% endfor %}
+        {% else %}
+            <div class="tip">
+                <h5>No apis yet.</h5>
+            </div>
+        {% endif %}
     </div>
+
     <div class="row tab-pane" id="slaves">
         <div class="col-md-3">
             <h2>Slave Nodes</h2>
@@ -77,9 +188,9 @@
             <a class="btn btn-primary" href="#add_slave" role="button" data-toggle="modal">Add</a>
         </div>
     </div>
-    <div class="row tab-pane" id="auth">
-        <h2>Auth</h2>
-    </div>
+    <!--<div class="row tab-pane" id="auth">-->
+        <!--<h2>Auth</h2>-->
+    <!--</div>-->
 </div>
 
 <!--model-->
@@ -191,89 +302,19 @@
     </div>
 </div>
 
-<div class="modal fade" id="add_config" tabindex="-1" style="margin-top: 100px">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Add Config</h4>
-            </div>
-            <div class="modal-body">
-                <form class="form-horizontal">
-                    <div class="form-group">
-                        <label for="host" class="col-sm-3 control-label">Host:</label>
-                        <div class="col-sm-8">
-                            <input type="text" value="" name="host" class="form-control" id="host"
-                                   placeholder="Please input the host">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="min-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
-                        <div class="col-sm-8">
-                            <input type="text" value=0 class="form-control" id="min-wait" name="min-wait"
-                                   placeholder="Please input the min wait time, default: 0.">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="max-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
-                        <div class="col-sm-8">
-                            <input type="text" value=0 class="form-control" id="max-wait" name="max-wait"
-                                   placeholder=">= min-wait-time, default: 0.">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="request-mode" class="col-sm-3 control-label">Request Mode:</label>
-                        <div class="col-sm-3">
-                            <select class="form-control" id="request-mode">
-                                <option value="FastHttpLocust">FastHttpLocust</option>
-                                <option value="HttpLocust">HttpLocust</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="token" class="col-sm-3 control-label">Token:</label>
-                        <div class="col-sm-3">
-                            <select class="form-control" id="token">
-                                <option value=1>Yes</option>
-                                <option value=0>Never</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="run-in-order" class="col-sm-3 control-label">Run in Order:</label>
-                        <div class="col-sm-3">
-                            <select class="form-control" id="run-in-order">
-                                <option value=1>Yes</option>
-                                <option value=0>No</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="content-type" class="col-sm-3 control-label">Content-Type:</label>
-                        <div class="col-sm-3">
-                            <select class="form-control" id="content-type">
-                                <option value="application/json">application/json</option>
-                                <option value="application/xml">application/xml</option>
-                                <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
-                                <option value="multipart/form-data">multipart/form-data</option>
-                                <option value="text/html">text/html</option>
-                                <option value="text/plain">text/plain</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="post_config('/config')">Save</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-
-<script type="text/javascript" src="../static/js/jquery-3.5.0.min.js"></script>
-<script type="text/javascript" src="../static/js/bootstrap.js"></script>
-<script type="text/javascript" src="../static/js/common.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/ext-language_tools.js"></script>
+    <script type="text/javascript" src="../static/js/jquery-3.5.0.min.js"></script>
+    <script type="text/javascript" src="../static/js/bootstrap.js"></script>
+    <script type="text/javascript" src="../static/js/common.js"></script>
+    <script>
+        editor = null;
+        function make_editor(id) {
+            editor = ace.edit(id);
+            init_acs('json', 'monokai', editor);
+        }
+    </script>
 
 </body>
 </html>

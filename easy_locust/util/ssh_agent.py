@@ -38,9 +38,9 @@ class SSHAgent:
         return stdout.read().decode('utf-8')
 
     def check_locust(self):
-        res = self.remote_command('locust -h')
-        if not res:
-            pipit = self.remote_command('pip install locustio')
+        res = self.remote_command('locust -V')
+        if not res or '0.14' not in res:
+            pipit = self.remote_command('python3 -m pip install locustio==0.14.6')
             if not pipit:
                 logging.error('Can not install locustio in this slave: {}'.format(self.ip))
                 return False
