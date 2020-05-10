@@ -1,11 +1,11 @@
 function post_api(url) {
     var data = {
-        "weight": $('#weight').val(),
+        "weight": parseInt($('#weight').val()),
         "url": $('#url').val(),
         "method": $('#method').val(),
         "query": $('#query').val(),
         "request_data": $('#request-data').val(),
-        "expect_status_code": $('#expect-code').val(),
+        "expect_status_code": parseInt($('#expect-code').val()),
         "expect_str": $('#expect-str').val()
     };
     $.ajax({
@@ -55,14 +55,14 @@ function post_slave(url) {
 function put_config(url) {
     var data = {
         "host": $('#host').val(),
-        "min_wait": $('#min-wait').val(),
-        "max_wait": $('#max-wait').val(),
+        "min_wait": parseFloat($('#min-wait').val()),
+        "max_wait": parseFloat($('#max-wait').val()),
         "request_mode": $('#request-mode').val(),
-        "run_in_order": $('#run-in-order').val(),
+        "run_in_order": parseInt($('#run-in-order').val()),
         "content_type": $('#content-type').val()
     };
     $.ajax({
-        type: 'post',
+        type: 'put',
         url: url,
         data: JSON.stringify(data),
         contentType: "application/json",

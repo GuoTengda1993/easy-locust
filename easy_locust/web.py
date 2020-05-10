@@ -1,30 +1,15 @@
 # -*- coding: utf-8 -*-
-import sys
-import os
 import json
 
-from flask import Flask, request, render_template
+from flask import request, render_template
 from flask_restful import Resource, Api
-from .models import *
+from easy_locust.models import app, db, Config, Url, Slave
 
 from easy_locust.util.ssh_agent import SSHAgent
 from paramiko.ssh_exception import AuthenticationException
 
 
-# SQLite URI compatible
-WIN = sys.platform.startswith('win')
-if WIN:
-    prefix = 'sqlite:///'
-else:
-    prefix = 'sqlite:////'
-
-basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-
 Methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD']
-
-
-class BaseConfig(object):
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # in-memory database
 
 
 class ConfigList(Resource):
@@ -132,6 +117,7 @@ class SlaveList(Resource):
         slaves = Slave.query.order_by(Slave.id).all()
         data = [{
             "id": slave.id,
+            "ip": slave.ip,
             "username": slave.username,
             "password": slave.password,
             "status": slave.status
@@ -150,6 +136,7 @@ class SlaveManage(Resource):
         slave = Slave.query.filter_by(id=id).first_or_404()
         data = {
             "id": slave.id,
+            "ip": slave.ip,
             "username": slave.username,
             "password": slave.password,
             "status": slave.status
@@ -248,7 +235,7 @@ class SlaveOp(Resource):
 class APIList(Resource):
 
     def get(self):
-        apis = ApiData.query.order_by(Api.id).all()
+        apis = Url.query.order_by(Url.id).all()
         data = [{
             "id": api.id,
             "name": api.name,
@@ -273,7 +260,7 @@ class APIList(Resource):
 class APIManage(Resource):
 
     def get(self, id):
-        api = ApiData.query.filter_by(id=id).first_or_404()
+        api = Url.query.filter_by(id=id).first_or_404()
         data = {
             "id": api.id,
             "name": api.name,
@@ -301,7 +288,7 @@ class APIManage(Resource):
         else:
             extra = json.dumps(data, ensure_ascii=False, indent=4)
             try:
-                api = ApiData(extra=extra, **data)
+                api = Url(extra=extra, **data)
                 db.session.add(api)
                 db.session.commit()
                 msg, code = "success", 201
@@ -315,7 +302,7 @@ class APIManage(Resource):
         return response, code
 
     def put(self, id):
-        api = ApiData.query.filter_by(id=id).first_or_404()
+        api = Url.query.filter_by(id=id).first_or_404()
         data = request.json
         if data.get('method') not in Methods:
             msg, code = "method error", 210
@@ -338,7 +325,7 @@ class APIManage(Resource):
         return response, code
 
     def delete(self, id):
-        api = ApiData.query.filter_by(id=id).first_or_404()
+        api = Url.query.filter_by(id=id).first_or_404()
         db.session.delete(api)
         db.session.commit()
         response = {
@@ -352,7 +339,7 @@ class APIManage(Resource):
 class APIOp(Resource):
 
     def get(self, id, operation):
-        api = ApiData.query.filter_by(id=id).first_or_404()
+        api = Url.query.filter_by(id=id).first_or_404()
         if operation == 'enable':
             if api.status == 1:
                 return {'msg': 'This api is enabled already', 'code': 210}, 210
@@ -367,20 +354,27 @@ class APIOp(Resource):
         return {'msg': 'success', 'code': 200}, 200
 
 
-def register_apis(api):
-    api.add_resource(ConfigList, '/config/list')
-    api.add_resource(ConfigManage, '/config', '/config/<id>')
-    api.add_resource(SlaveList, '/slave/list')
-    api.add_resource(SlaveManage, '/slave', '/slave/<id>')
-    api.add_resource(SlaveOp, '/slave/<id>/<operation>')
-    api.add_resource(APIList, '/api/list')
-    api.add_resource(APIManage, '/api', '/api/<id>')
-    api.add_resource(APIOp, '/api/<id>/<operation>')
+@app.route('/', methods=['GET'])
+def start():
+    config = Config.query.first()
+    # apis = Url.query.order_by(Url.id.desc()).all()
+    slaves = Slave.query.order_by(Slave.id.desc()).all()
+    return render_template("index.html", config=config, apis=None, slaves=slaves)
 
 
-def register_db(app):
-    db.init_app(app)
-    db.create_all(app)
+def register_apis(api_reg):
+    api_reg.add_resource(ConfigList, '/config/list')
+    api_reg.add_resource(ConfigManage, '/config', '/config/<id>')
+    api_reg.add_resource(SlaveList, '/slave/list')
+    api_reg.add_resource(SlaveManage, '/slave', '/slave/<id>')
+    api_reg.add_resource(SlaveOp, '/slave/<id>/<operation>')
+    api_reg.add_resource(APIList, '/api/list')
+    api_reg.add_resource(APIManage, '/api', '/api/<id>')
+    api_reg.add_resource(APIOp, '/api/<id>/<operation>')
+
+
+def register_db():
+    db.create_all()
     config = Config.query.filter_by(id=1).first()
     if not config:
         config = Config(name="defaultConfig")
@@ -392,23 +386,14 @@ def register_template_context(app):
     @app.context_processor
     def make_template_context():
         config = Config.query.first()
-        apis = ApiData.query.order_by(ApiData.id).all()
-        slaves = Slave.query.order_by(Slave.id).all()
-        return dict(config=config, apis=apis, slaves=slaves)
+        # apis = Url.query.order_by(Url.id.desc()).all()
+        slaves = Slave.query.order_by(Slave.id.desc()).all()
+        return dict(config=config, apis=None, slaves=slaves)
 
 
-def create_app(db_type=0):
-    app = Flask('easy-locust')
-    app.config.from_object(BaseConfig)
-    if db_type == 1:
-        db_path = prefix + os.path.join(basedir, 'easy-locust.sqlite')
-        db_setting = {'SQLALCHEMY_DATABASE_URI': db_path}
-        app.config.update(db_setting)
-    api = Api(app)
-    register_db(app)
-    register_apis(api)
-    register_template_context(app)
-
-    @app.route('/')
-    def start():
-        return render_template("index.html")
+def init_app(port=8899, debug=False, threaded=True):
+    api_reg = Api(app)
+    register_db()
+    register_apis(api_reg)
+    # register_template_context(app)
+    app.run(host='0.0.0.0', port=port, debug=debug, threaded=threaded)

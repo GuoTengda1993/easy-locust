@@ -32,31 +32,18 @@
 <div class="container tab-content">
       <div class="row tab-pane active" id="main">
         <div class="col-sm-4">
-          <h2>关于我</h2>
-          <h5>我的照片:</h5>
-          <div class="fakeimg">这边插入图像</div>
-          <p>关于我的介绍..</p>
-          <h3>链接</h3>
-          <p>描述文本。</p>
+          <h2>About Easy-Locust</h2>
+          <p>Description: ...</p>
           <ul class="nav nav-pills nav-stacked">
-            <li class="active"><a href="#">链接 1</a></li>
-            <li><a href="#">链接 2</a></li>
-            <li><a href="#">链接 3</a></li>
+            <li><a href="#">GitHub</a></li>
           </ul>
           <hr class="hidden-sm hidden-md hidden-lg">
         </div>
         <div class="col-sm-8">
-          <h2>标题</h2>
-          <h5>副标题</h5>
-          <div class="fakeimg">图像</div>
-          <p>一些文本..</p>
-          <p>菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！</p>
+          <h2>Essy Locust</h2>
+          <h5>An extension tool for Locustio</h5>
+          <p>Usage ...</p>
           <br>
-          <h2>标题</h2>
-          <h5>副标题</h5>
-          <div class="fakeimg">图像</div>
-          <p>一些文本..</p>
-          <p>菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！菜鸟教程，学的不仅是技术，更是梦想！！！</p>
         </div>
       </div>
     <div class="row tab-pane" id="config">
@@ -65,46 +52,37 @@
                 <div class="form-group">
                     <label for="host" class="col-sm-3 control-label">Host:</label>
                     <div class="col-sm-8">
-                        <input type="text" value="" name="host" class="form-control" id="host"
+                        <input type="text" value={{ config.host }} name="host" class="form-control" id="host"
                                placeholder="Please input the host">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="min-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
                     <div class="col-sm-8">
-                        <input type="text" value=0 class="form-control" id="min-wait" name="min-wait"
+                        <input type="text" value={{ config.min_wait }} class="form-control" id="min-wait" name="min-wait"
                                placeholder="Please input the min wait time, default: 0.">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="max-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
                     <div class="col-sm-8">
-                        <input type="text" value=0 class="form-control" id="max-wait" name="max-wait"
+                        <input type="text" value={{ config.max_wait }} class="form-control" id="max-wait" name="max-wait"
                                placeholder=">= min-wait-time, default: 0.">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="request-mode" class="col-sm-3 control-label">Request Mode:</label>
                     <div class="col-sm-3">
-                        <select class="form-control" id="request-mode">
+                        <select class="form-control config-request-mode" id="request-mode" value={{ config.request_mode }}>
                             <option value="FastHttpLocust">FastHttpLocust</option>
                             <option value="HttpLocust">HttpLocust</option>
                         </select>
                     </div>
                 </div>
-                <!--<div class="form-group">-->
-                    <!--<label for="token" class="col-sm-3 control-label">Token:</label>-->
-                    <!--<div class="col-sm-3">-->
-                        <!--<select class="form-control" id="token">-->
-                            <!--<option value=1>Yes</option>-->
-                            <!--<option value=0>Never</option>-->
-                        <!--</select>-->
-                    <!--</div>-->
-                <!--</div>-->
                 <div class="form-group">
                     <label for="run-in-order" class="col-sm-3 control-label">Run in Order:</label>
                     <div class="col-sm-3">
-                        <select class="form-control" id="run-in-order">
+                        <select class="form-control" id="run-in-order" value={{ config.run_in_order }}>
                             <option value=1>Yes</option>
                             <option value=0>No</option>
                         </select>
@@ -113,7 +91,7 @@
                 <div class="form-group">
                     <label for="content-type" class="col-sm-3 control-label">Content-Type:</label>
                     <div class="col-sm-3">
-                        <select class="form-control" id="content-type">
+                        <select class="form-control" id="content-type" value={{ config.content_type }}>
                             <option value="application/json">application/json</option>
                             <option value="application/xml">application/xml</option>
                             <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
@@ -125,10 +103,9 @@
                 </div>
                 <div class="form-group">
                     <div class="col-sm-offset-3 col-sm-10">
-                        <button type="button" class="btn btn-primary" onclick="put_config('/config')">Save</button>
+                        <button type="button" class="btn btn-primary" onclick="put_config('/config/1')">Save</button>
                     </div>
                 </div>
-
             </form>
     </div>
     <div class="row tab-pane" id="apis">
@@ -164,7 +141,7 @@
                 <button class="btn btn-primary" onclick="operate_api('/api/{{ api.id }}/enable')">Enable</button>
             {% else %}
                 <button class="btn btn-warning" onclick="operate_api('/api/{{ api.id }}/disable')">Disable</button>
-            {% endif % }
+            {% endif %}
                 <button class="btn btn-danger" style="margin-left: 5px" onclick="del_api('/api/{{ api.id }}/')">Del</button>
             </div>
              <div class="block_body collapse" id="collapse_api_{{ api.id }}">
@@ -187,6 +164,33 @@
         <div class="col-md-offset-0" style="margin-top: 18px">
             <a class="btn btn-primary" href="#add_slave" role="button" data-toggle="modal">Add</a>
         </div>
+        {% if slaves %}
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>IP</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                    <th>Operation</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for slave in slaves %}
+            <tr>
+                <td>{{ slave.id }}</td>
+                <td>{{ slave.ip }}</td>
+                <td>{{ slave.username }}</td>
+                <td>{{ slave.password }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="tip">
+                <h5>No slaves yet.</h5>
+            </div>
+        {% endif %}
     </div>
     <!--<div class="row tab-pane" id="auth">-->
         <!--<h2>Auth</h2>-->
