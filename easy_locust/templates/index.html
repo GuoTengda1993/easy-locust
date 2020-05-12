@@ -52,28 +52,28 @@
                 <div class="form-group">
                     <label for="host" class="col-sm-3 control-label">Host:</label>
                     <div class="col-sm-8">
-                        <input type="text" value={{ config.host }} name="host" class="form-control" id="host"
+                        <input type="text" value="{{ config.host }}" name="host" class="form-control" id="host"
                                placeholder="Please input the host">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="min-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
                     <div class="col-sm-8">
-                        <input type="text" value={{ config.min_wait }} class="form-control" id="min-wait" name="min-wait"
+                        <input type="text" value="{{ config.min_wait }}" class="form-control" id="min-wait" name="min-wait"
                                placeholder="Please input the min wait time, default: 0.">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="max-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
                     <div class="col-sm-8">
-                        <input type="text" value={{ config.max_wait }} class="form-control" id="max-wait" name="max-wait"
+                        <input type="text" value="{{ config.max_wait }}" class="form-control" id="max-wait" name="max-wait"
                                placeholder=">= min-wait-time, default: 0.">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="request-mode" class="col-sm-3 control-label">Request Mode:</label>
                     <div class="col-sm-3">
-                        <select class="form-control config-request-mode" id="request-mode" value={{ config.request_mode }}>
+                        <select class="form-control config-request-mode" id="request-mode" value="{{ config.request_mode }}">
                             <option value="FastHttpLocust">FastHttpLocust</option>
                             <option value="HttpLocust">HttpLocust</option>
                         </select>
@@ -82,7 +82,7 @@
                 <div class="form-group">
                     <label for="run-in-order" class="col-sm-3 control-label">Run in Order:</label>
                     <div class="col-sm-3">
-                        <select class="form-control" id="run-in-order" value={{ config.run_in_order }}>
+                        <select class="form-control" id="run-in-order" value="{{ config.run_in_order }}">
                             <option value=1>Yes</option>
                             <option value=0>No</option>
                         </select>
@@ -91,7 +91,7 @@
                 <div class="form-group">
                     <label for="content-type" class="col-sm-3 control-label">Content-Type:</label>
                     <div class="col-sm-3">
-                        <select class="form-control" id="content-type" value={{ config.content_type }}>
+                        <select class="form-control" id="content-type" value="{{ config.content_type }}">
                             <option value="application/json">application/json</option>
                             <option value="application/xml">application/xml</option>
                             <option value="application/x-www-form-urlencoded">application/x-www-form-urlencoded</option>
@@ -136,13 +136,13 @@
             {% endif %}
                 <span class="block-method block_url">{{ api.url }}</span>
                 <span class="block-summary-description">Weight: {{ api.weight }}</span>
-                <button class="btn btn-primary" onclick="put_api('/api/{{ api.id }}/')">Save</button>
+                <button class="btn btn-primary" onclick="put_api('/test/{{ api.id }}/')">Save</button>
             {% if api.status == 0 %}
-                <button class="btn btn-primary" onclick="operate_api('/api/{{ api.id }}/enable')">Enable</button>
+                <button class="btn btn-primary" onclick="operation('/test/{{ api.id }}/enable')">Enable</button>
             {% else %}
-                <button class="btn btn-warning" onclick="operate_api('/api/{{ api.id }}/disable')">Disable</button>
+                <button class="btn btn-warning" onclick="operation('/test/{{ api.id }}/disable')">Disable</button>
             {% endif %}
-                <button class="btn btn-danger" style="margin-left: 5px" onclick="del_api('/api/{{ api.id }}/')">Del</button>
+                <button class="btn btn-danger" style="margin-left: 5px" onclick="delete_instance('/test/{{ api.id }}/')">Del</button>
             </div>
              <div class="block_body collapse" id="collapse_api_{{ api.id }}">
                 <pre id="code_{{ api.id }}" class="ace_editor" style="min-height: 400px">
@@ -151,8 +151,11 @@
              </div>
         {% endfor %}
         {% else %}
-            <div class="tip">
-                <h5>No apis yet.</h5>
+            <div class="row tip">
+                <br><br>
+                <div class="col-md-offset-4">
+                    <h3>No apis yet.</h3>
+                </div>
             </div>
         {% endif %}
     </div>
@@ -177,18 +180,36 @@
             </thead>
             <tbody>
             {% for slave in slaves %}
+            {% if slave.status == 2 %}
+            <tr class="success">
+            {% else %}
             <tr>
+            {% endif %}
                 <td>{{ slave.id }}</td>
                 <td>{{ slave.ip }}</td>
                 <td>{{ slave.username }}</td>
                 <td>{{ slave.password }}</td>
+                <td>
+                    {% if slave.status > 0 %}
+                    <button type="button" class="btn btn-warning small" onclick="operation('/slave/{{ slave.id }}/disable')">Disable</button>
+                    {% else %}
+                    <button type="button" class="btn btn-primary small" onclick="operation('/slave/{{ slave.id }}/enable')">Enable</button>
+                    {% endif %}
+                    {% if slave.status == 1 %}
+                    <button type="button" class="btn btn-primary small" onclick="operation('/slave/{{ slave.id }}/check')">Check</button>
+                    {% endif %}
+                    <button type="button" class="btn btn-danger small" onclick="delete_instance('/slave/{{ slave.id }}')">Del</button>
+                </td>
             </tr>
             {% endfor %}
             </tbody>
         </table>
         {% else %}
-            <div class="tip">
-                <h5>No slaves yet.</h5>
+            <div class="row tip">
+                <br><br>
+                <div class="col-md-offset-4">
+                    <h3>No slaves yet.</h3>
+                </div>
             </div>
         {% endif %}
     </div>

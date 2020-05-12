@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import json
+from functools import wraps
 
 from flask import request, render_template
 from flask_restful import Resource, Api
-from easy_locust.models import app, db, Config, Url, Slave
+from easy_locust.models import app, db, Config, Test, Slave
 
 from easy_locust.util.ssh_agent import SSHAgent
 from paramiko.ssh_exception import AuthenticationException
@@ -12,11 +13,30 @@ from paramiko.ssh_exception import AuthenticationException
 Methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD']
 
 
+def format_response(func):
+    @wraps(func)
+    def formatter(*args, **kwargs):
+        p = func(*args, **kwargs)
+        if len(p) == 2:
+            msg, code = p
+            res = None
+        else:
+            msg, res, code = p
+        _response = {
+            "msg": msg,
+            "res": res,
+            "code": code
+        }
+        return _response, code
+    return formatter
+
+
 class ConfigList(Resource):
 
+    @format_response
     def get(self):
         configs = Config.query.order_by(Config.id).all()
-        data = [{
+        res = [{
             "host": config.host,
             "min_wait": config.min_wait,
             "max_wait": config.max_wait,
@@ -25,19 +45,15 @@ class ConfigList(Resource):
             "run_in_order": config.run_in_order,
             "content_type": config.content_type
         } for config in configs]
-        response = {
-            "msg": "success",
-            "code": 200,
-            "res": data
-        }
-        return response, 200
+        return "success", res, 200
 
 
 class ConfigManage(Resource):
 
+    @format_response
     def get(self, id):
         config = Config.query.filter_by(id=id).first_or_404()
-        data = {
+        res = {
             "host": config.host,
             "min_wait": config.min_wait,
             "max_wait": config.max_wait,
@@ -46,13 +62,9 @@ class ConfigManage(Resource):
             "run_in_order": config.run_in_order,
             "content_type": config.content_type
         }
-        response = {
-            "msg": "success",
-            "code": 200,
-            "res": data
-        }
-        return response, 200
+        return "success", res, 200
 
+    @format_response
     def post(self):
         data = request.json
         min_wait = float(data.get('min_wait', 0.0))
@@ -61,9 +73,9 @@ class ConfigManage(Resource):
         run_in_order = bool(data.get('run_in_order', False))
         request_mode = data.get('request_mode')
         if request_mode not in ['FastHttpLocust', 'HttpLocust']:
-            return {'msg': 'request_mode should be FastHttpLocust or HttpLocust', 'code': 210}, 210
+            return 'request_mode should be FastHttpLocust or HttpLocust', 210
         if max_wait < min_wait:
-            return {'msg': 'max-wait cannot smaller than min-wait', 'code': 210}, 210
+            return 'max-wait cannot smaller than min-wait', 210
         data['min_wait'] = min_wait
         data['max_wait'] = max_wait
         data['token'] = token
@@ -72,16 +84,11 @@ class ConfigManage(Resource):
             config = Config(**data)
             db.session.add(config)
             db.session.commit()
-            msg, code = "success", 201
+            return "success", 201
         except Exception as e:
-            msg, code = "Add config fail: {}".format(e), 210
-        response = {
-            "msg": msg,
-            "code": code,
-            "res": ""
-        }
-        return response, code
+            return "Add config fail: {}".format(e), 210
 
+    @format_response
     def put(self, id):
         config = Config.query.filter_by(id=id).first_or_404()
         data = request.json
@@ -89,81 +96,59 @@ class ConfigManage(Resource):
             for key, value in data.items():
                 setattr(config, key, value)
             db.session.commit()
-            msg, code = "success", 200
+            return "success", 200
         except Exception as e:
-            msg, code = "Edit config fail: {}".format(e), 210
-        response = {
-            "msg": msg,
-            "code": code,
-            "res": ""
-        }
-        return response, code
+            return "Edit config fail: {}".format(e), 210
 
+    @format_response
     def delete(self, id):
         config = Config.query.filter_by(id=id).first_or_404()
         db.session.delete(config)
         db.session.commit()
-        response = {
-            "msg": "success",
-            "code": 204,
-            "res": ""
-        }
-        return response, 204
+        return "success", 204
 
 
 class SlaveList(Resource):
 
+    @format_response
     def get(self):
         slaves = Slave.query.order_by(Slave.id).all()
-        data = [{
+        res = [{
             "id": slave.id,
             "ip": slave.ip,
             "username": slave.username,
             "password": slave.password,
             "status": slave.status
         } for slave in slaves]
-        response = {
-            "msg": "success",
-            "code": 200,
-            "res": data
-        }
-        return response, 200
+        return "success", res, 200
 
 
 class SlaveManage(Resource):
 
+    @format_response
     def get(self, id):
         slave = Slave.query.filter_by(id=id).first_or_404()
-        data = {
+        res = {
             "id": slave.id,
             "ip": slave.ip,
             "username": slave.username,
             "password": slave.password,
             "status": slave.status
         }
-        response = {
-            "msg": "success",
-            "code": 200,
-            "res": data
-        }
-        return response, 200
+        return "success", res, 200
 
+    @format_response
     def post(self):
         data = request.json
         try:
             slave = Slave(**data)
             db.session.add(slave)
             db.session.commit()
-            msg, code = "success", 201
+            return "success", 201
         except Exception as e:
-            msg, code = "Add slave node fail: {}".format(e), 210
-        response = {
-            "msg": msg,
-            "code": code,
-            "res": ""
-        }
-        return response, code
+            return "Add slave node fail: {}".format(e), 210
 
+    @format_response
     def put(self, id):
         slave = Slave.query.filter_by(id=id).first_or_404()
         data = request.json
@@ -171,51 +156,41 @@ class SlaveManage(Resource):
             for key, value in data.items():
                 setattr(slave, key, value)
             db.session.commit()
-            msg, code = "success", 200
+            return "success", 200
         except Exception as e:
-            msg, code = "Edit slave node fail: {}".format(e), 210
-        response = {
-            "msg": msg,
-            "code": code,
-            "res": ""
-        }
-        return response, code
+            return "Edit slave node fail: {}".format(e), 210
 
+    @format_response
     def delete(self, id):
         slave = Slave.query.filter_by(id=id).first_or_404()
         db.session.delete(slave)
         db.session.commit()
-        response = {
-            "msg": "success",
-            "code": 204,
-            "res": ""
-        }
-        return response, 204
+        return "success", 204
 
 
 class SlaveOp(Resource):
 
+    @format_response
     def get(self, id, operation):
         slave = Slave.query.filter_by(id=id).first_or_404()
         if operation == 'disable':
             if slave.status == 0:
-                return {'msg': 'This slave is disabled already', 'code': 210}, 210
+                return 'This slave is disabled already', 210
             slave.status = 0
             msg, code = 'success', 200
         elif operation == 'enable':
             if slave.status == 1:
-                return {'msg': 'This slave is enabled already', 'code': 210}, 210
+                return 'This slave is enabled already', 210
             try:
                 ssh = SSHAgent(ip=slave.ip, username=slave.username, password=slave.password)
+                ssh.close()
                 slave.status = 1
                 msg, code = 'success', 200
             except AuthenticationException:
-                msg, code = 'Authentication error with this slave', 210
-            finally:
-                ssh.close()
+                return 'Authentication error with this slave', 210
         elif operation == 'check':
             if slave.status == 2:
-                return {'msg': 'This slave is checked already', 'code': 210}, 210
+                return 'This slave is checked already', 210
             ssh = SSHAgent(ip=slave.ip, username=slave.username, password=slave.password)
             with ssh:
                 check = ssh.check_locust()
@@ -227,137 +202,114 @@ class SlaveOp(Resource):
                 msg, code = 'Cannot install locustio==0.14.6, please install it manually.', 210
                 slave.extra = msg
         else:
-            return {'msg': 'No such action', 'code': 404}, 404
+            return 'No such action', 404
         db.session.commit()
-        return {'msg': msg, 'code': code}, code
+        return msg, code
 
 
-class APIList(Resource):
+class TestList(Resource):
 
+    @format_response
     def get(self):
-        apis = Url.query.order_by(Url.id).all()
-        data = [{
-            "id": api.id,
-            "name": api.name,
-            "config_id": api.config_id,
-            "weight": api.weight,
-            "url": api.url,
-            "method": api.method,
-            "query": api.query,
-            "request_data": api.request_data,
-            "expect_status_code": api.expect_status_code,
-            "expect_str": api.expect_str,
-            "status": api.status
-        } for api in apis]
-        response = {
-            "msg": "success",
-            "code": 200,
-            "res": data
-        }
-        return response, 200
+        apis = Test.query.order_by(Test.id).all()
+        res = [{
+            "id": test.id,
+            "name": test.name,
+            "config_id": test.config_id,
+            "weight": test.weight,
+            "url": test.url,
+            "method": test.method,
+            "query": test.query,
+            "request_data": test.request_data,
+            "expect_status_code": test.expect_status_code,
+            "expect_str": test.expect_str,
+            "status": test.status
+        } for test in apis]
+        return "success", res, 200
 
 
-class APIManage(Resource):
+class TestManage(Resource):
 
+    @format_response
     def get(self, id):
-        api = Url.query.filter_by(id=id).first_or_404()
-        data = {
-            "id": api.id,
-            "name": api.name,
-            "config_id": api.config_id,
-            "weight": api.weight,
-            "url": api.url,
-            "method": api.method,
-            "query": api.query,
-            "request_data": api.request_data,
-            "expect_status_code": api.expect_status_code,
-            "expect_str": api.expect_str,
-            "status": api.status
+        test = Test.query.filter_by(id=id).first_or_404()
+        res = {
+            "id": test.id,
+            "name": test.name,
+            "config_id": test.config_id,
+            "weight": test.weight,
+            "url": test.url,
+            "method": test.method,
+            "query": test.query,
+            "request_data": test.request_data,
+            "expect_status_code": test.expect_status_code,
+            "expect_str": test.expect_str,
+            "status": test.status
         }
-        response = {
-            "msg": "success",
-            "code": 200,
-            "res": data
-        }
-        return response, 200
+        return "success", res, 200
 
+    @format_response
     def post(self):
         data = request.json
         if data.get('method') not in Methods:
-            msg, code = "method error", 210
-        else:
-            extra = json.dumps(data, ensure_ascii=False, indent=4)
-            try:
-                api = Url(extra=extra, **data)
-                db.session.add(api)
-                db.session.commit()
-                msg, code = "success", 201
-            except Exception as e:
-                msg, code = "Add api fail: {}".format(e), 210
-        response = {
-            "msg": msg,
-            "code": code,
-            "res": ""
-        }
-        return response, code
+            return "method error", 210
+        extra = json.dumps(data, ensure_ascii=False, indent=4)
+        try:
+            test = Test(extra=extra, **data)
+            db.session.add(test)
+            db.session.commit()
+            return "success", 201
+        except Exception as e:
+            return "Add test fail: {}".format(e), 210
 
+    @format_response
     def put(self, id):
-        api = Url.query.filter_by(id=id).first_or_404()
+        test = Test.query.filter_by(id=id).first_or_404()
         data = request.json
         if data.get('method') not in Methods:
-            msg, code = "method error", 210
-        else:
-            try:
-                extra = json.loads(api.extra, encoding='utf-8')
-                for key, value in data.items():
-                    setattr(api, key, value)
-                    extra[key] = value
-                api.extra = extra
-                db.session.commit()
-                msg, code = "success", 200
-            except Exception as e:
-                msg, code = "Edit slave node fail: {}".format(e), 210
-        response = {
-            "msg": msg,
-            "code": code,
-            "res": ""
-        }
-        return response, code
+            return "method error", 210
+        try:
+            extra = json.loads(test.extra, encoding='utf-8')
+            for key, value in data.items():
+                setattr(test, key, value)
+                extra[key] = value
+            test.extra = extra
+            db.session.commit()
+            return "success", 200
+        except Exception as e:
+            return "Edit slave node fail: {}".format(e), 210
 
+    @format_response
     def delete(self, id):
-        api = Url.query.filter_by(id=id).first_or_404()
-        db.session.delete(api)
+        test = Test.query.filter_by(id=id).first_or_404()
+        db.session.delete(test)
         db.session.commit()
-        response = {
-            "msg": "success",
-            "code": 204,
-            "res": ""
-        }
-        return response, 204
+        return "success", 204
 
 
 class APIOp(Resource):
 
+    @format_response
     def get(self, id, operation):
-        api = Url.query.filter_by(id=id).first_or_404()
+        test = Test.query.filter_by(id=id).first_or_404()
         if operation == 'enable':
-            if api.status == 1:
-                return {'msg': 'This api is enabled already', 'code': 210}, 210
-            api.status = 1
+            if test.status == 1:
+                return 'This test is enabled already', 210
+            test.status = 1
         elif operation == 'disable':
-            if api.status == 0:
-                return {'msg': 'This api is disabled already', 'code': 210}, 210
-            api.status = 0
+            if test.status == 0:
+                return 'This test is disabled already', 210
+            test.status = 0
         else:
-            return {'msg': 'No such action', 'code': 404}, 404
+            return 'No such action', 404
         db.session.commit()
-        return {'msg': 'success', 'code': 200}, 200
+        return 'success', 200
 
 
 @app.route('/', methods=['GET'])
 def start():
     config = Config.query.first()
-    # apis = Url.query.order_by(Url.id.desc()).all()
+    # apis = Test.query.order_by(Test.id.desc()).all()
     slaves = Slave.query.order_by(Slave.id.desc()).all()
     return render_template("index.html", config=config, apis=None, slaves=slaves)
 
@@ -368,9 +320,9 @@ def register_apis(api_reg):
     api_reg.add_resource(SlaveList, '/slave/list')
     api_reg.add_resource(SlaveManage, '/slave', '/slave/<id>')
     api_reg.add_resource(SlaveOp, '/slave/<id>/<operation>')
-    api_reg.add_resource(APIList, '/api/list')
-    api_reg.add_resource(APIManage, '/api', '/api/<id>')
-    api_reg.add_resource(APIOp, '/api/<id>/<operation>')
+    api_reg.add_resource(TestList, '/test/list')
+    api_reg.add_resource(TestManage, '/test', '/test/<id>')
+    api_reg.add_resource(APIOp, '/test/<id>/<operation>')
 
 
 def register_db():
@@ -386,7 +338,7 @@ def register_template_context(app):
     @app.context_processor
     def make_template_context():
         config = Config.query.first()
-        # apis = Url.query.order_by(Url.id.desc()).all()
+        # apis = Test.query.order_by(Test.id.desc()).all()
         slaves = Slave.query.order_by(Slave.id.desc()).all()
         return dict(config=config, apis=None, slaves=slaves)
 

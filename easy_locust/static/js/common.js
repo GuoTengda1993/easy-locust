@@ -52,6 +52,42 @@ function post_slave(url) {
     });
 }
 
+function delete_instance(url) {
+    $.ajax({
+        type: 'delete',
+        url: url,
+        success: function () {
+            response = JSON.parse(data);
+            if (response.msg === 'success') {
+                window.location.reload();
+            } else {
+                alert(response.msg)
+            }
+        },
+        error: function () {
+            alert('Error happened.. Life was like a box of chocolates, you never know what you’re gonna get.')
+        }
+    });
+}
+
+function operation(url) {
+    $.ajax({
+        type: 'get',
+        url: url,
+        success: function () {
+            response = JSON.parse(data);
+            if (response.msg === 'success') {
+                window.location.reload();
+            } else {
+                alert(response.msg)
+            }
+        },
+        error: function () {
+            alert('Error happened.. Life was like a box of chocolates, you never know what you’re gonna get.')
+        }
+    });
+}
+
 function put_config(url) {
     var data = {
         "host": $('#host').val(),
@@ -75,7 +111,7 @@ function put_config(url) {
             }
         },
         error: function () {
-            alert('Error happened.. Life was like a box of chocolates, you never know what you’re gonna get.')
+            alert('Error happened.. Life was like a box of chocolates, you never know what you`re gonna get.')
         }
     });
 }
@@ -101,41 +137,6 @@ function put_api(url) {
     });
 }
 
-function del_api(url) {
-    $.ajax({
-        type: 'delete',
-        url: url,
-        success: function (data) {
-            response = JSON.parse(data);
-            if (response.msg === 'success') {
-                window.location.reload();
-            } else {
-                alert(response.msg)
-            }
-        },
-        error: function () {
-            alert('Error happened.. Life was like a box of chocolates, you never know what you’re gonna get.')
-        }
-    });
-}
-
-function operate_api(url) {
-    $.ajax({
-        type: 'get',
-        url: url,
-        success: function (data) {
-            response = JSON.parse(data);
-            if (response.msg === 'success') {
-                window.location.reload();
-            } else {
-                alert(response.msg)
-            }
-        },
-        error: function () {
-            alert('Error happened.. Life was like a box of chocolates, you never know what you’re gonna get.')
-        }
-    });
-}
 
 function collapse_api(id) {
     var element = $(id);

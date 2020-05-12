@@ -39,7 +39,7 @@ class Config(db.Model):
     headers = db.Column(db.Text)
 
 
-class Url(db.Model):
+class Test(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30))
     weight = db.Column(db.Integer, default=100)
@@ -61,16 +61,3 @@ class Slave(db.Model):
     status = db.Column(db.Integer, default=1)  # 0: disable, 1: enable, 2: checked
     category = db.Column(db.String(20), default="locust")  # locust or boomer... This column will be used in the future
     extra = db.Column(db.String(255))
-
-
-# class Auth(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     config_id = db.Column(db.Integer, db.ForeignKey("config.id"))
-#     method = db.Column(db.String(10), default="POST")
-#     token_utl = db.Column(db.String(256), nullable=False)
-#     content_type = db.Column(db.String(30), default="application/json")
-#     body = db.Column(db.Text)
-#     header_key = db.Column(db.String(20), default="x-auth-token")
-#     token_index = db.Column(db.Text)  # Header: X-subject-Token  or JSON: body.token
-#
-#     config = db.relationship("Config", back_populates="auths")
