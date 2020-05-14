@@ -45,7 +45,7 @@ class Test(db.Model):
     weight = db.Column(db.Integer, default=100)
     url = db.Column(db.String(256), nullable=False)
     method = db.Column(db.String(10), nullable=False)
-    query = db.Column(db.Text)
+    query_params = db.Column(db.Text)
     request_data = db.Column(db.Text)
     expect_status_code = db.Column(db.Integer)
     expect_str = db.Column(db.Text)
