@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+import logging
 from .extractExcel import *
 
 
@@ -154,7 +156,7 @@ MODE_TASK_SEQ_POST_NC = '''
 '''
 
 
-def make_locustfile(ptfile):
+def make_locustfile(ptfile) -> str:
     if isinstance(ptfile, dict):
         file_type = 'dict'
     elif ptfile.endswith('.xls'):
@@ -306,3 +308,15 @@ def make_locustfile(ptfile):
     locustfile = locustfile.replace('@-', '{')
     locustfile = locustfile.replace('-@', '}')
     return locustfile
+
+
+def generate_locust_file(filename):
+    _f = make_locustfile(filename)
+    if _f.startswith('ERROR:'):
+        logging.error(_f)
+        return False
+    _fn = re.sub('(\.xls)|(\.json)', '.py', filename)
+    with open(_fn, 'w', encoding='utf-8') as f:
+        f.writelines(_f)
+    logging.info('Transform xls/json to locustfile finish.')
+    return True

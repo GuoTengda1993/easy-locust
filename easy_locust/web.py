@@ -265,19 +265,18 @@ class TestManage(Resource):
     @format_response
     def put(self, id):
         test = Test.query.filter_by(id=id).first_or_404()
-        data = request.json
+        raw_data = request.json
+        data = json.loads(raw_data, encoding='utf-8')
         if data.get('method') not in Methods:
             return "method error", 210
         try:
-            extra = json.loads(test.extra, encoding='utf-8')
             for key, value in data.items():
                 setattr(test, key, value)
-                extra[key] = value
-            test.extra = extra
+            test.extra = raw_data
             db.session.commit()
             return "success", 200
         except Exception as e:
-            return "Edit slave node fail: {}".format(e), 210
+            return "Edit fail: {}".format(e), 210
 
     @format_response
     def delete(self, id):
@@ -287,7 +286,7 @@ class TestManage(Resource):
         return "success", 204
 
 
-class APIOp(Resource):
+class TestOp(Resource):
 
     @format_response
     def get(self, id, operation):
@@ -309,9 +308,9 @@ class APIOp(Resource):
 @app.route('/', methods=['GET'])
 def start():
     config = Config.query.first()
-    # apis = Test.query.order_by(Test.id.desc()).all()
+    apis = Test.query.order_by(Test.id.desc()).all()
     slaves = Slave.query.order_by(Slave.id.desc()).all()
-    return render_template("index.html", config=config, apis=None, slaves=slaves)
+    return render_template("index.html", config=config, apis=apis, slaves=slaves)
 
 
 def register_apis(api_reg):
@@ -322,7 +321,7 @@ def register_apis(api_reg):
     api_reg.add_resource(SlaveOp, '/slave/<id>/<operation>')
     api_reg.add_resource(TestList, '/test/list')
     api_reg.add_resource(TestManage, '/test', '/test/<id>')
-    api_reg.add_resource(APIOp, '/test/<id>/<operation>')
+    api_reg.add_resource(TestOp, '/test/<id>/<operation>')
 
 
 def register_db():
@@ -338,9 +337,9 @@ def register_template_context(app):
     @app.context_processor
     def make_template_context():
         config = Config.query.first()
-        # apis = Test.query.order_by(Test.id.desc()).all()
+        apis = Test.query.order_by(Test.id.desc()).all()
         slaves = Slave.query.order_by(Slave.id.desc()).all()
-        return dict(config=config, apis=None, slaves=slaves)
+        return dict(config=config, apis=apis, slaves=slaves)
 
 
 def init_app(port=8899, debug=False, threaded=True):

@@ -3,7 +3,7 @@ function post_api(url) {
         "weight": parseInt($('#weight').val()),
         "url": $('#url').val(),
         "method": $('#method').val(),
-        "query": $('#query').val(),
+        "query_params": $('#query-params').val(),
         "request_data": $('#request-data').val(),
         "expect_status_code": parseInt($('#expect-code').val()),
         "expect_str": $('#expect-str').val()

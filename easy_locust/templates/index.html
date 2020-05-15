@@ -32,10 +32,10 @@
 <div class="container tab-content">
       <div class="row tab-pane active" id="main">
         <div class="col-sm-4">
-          <h2>About Easy-Locust</h2>
+          <h2>About</h2>
           <p>Description: ...</p>
           <ul class="nav nav-pills nav-stacked">
-            <li><a href="#">GitHub</a></li>
+            <li><a href="https://github.com/GuoTengda1993/easy-locust" target="_blank">GitHub</a></li>
           </ul>
           <hr class="hidden-sm hidden-md hidden-lg">
         </div>
@@ -115,6 +115,7 @@
         <div class="col-md-offset-0" style="margin-top: 18px">
             <a class="btn btn-primary" href="#add_api" role="button" data-toggle="modal">Add</a>
         </div>
+        <div class="col-md-12">
         {% if apis %}
         {% for api in apis %}
             {% if api.method|lower == 'post' %}
@@ -136,13 +137,13 @@
             {% endif %}
                 <span class="block-method block_url">{{ api.url }}</span>
                 <span class="block-summary-description">Weight: {{ api.weight }}</span>
-                <button class="btn btn-primary" onclick="put_api('/test/{{ api.id }}/')">Save</button>
+                <button class="btn btn-primary" onclick="put_api('/test/{{ api.id }}')">Save</button>
             {% if api.status == 0 %}
                 <button class="btn btn-primary" onclick="operation('/test/{{ api.id }}/enable')">Enable</button>
             {% else %}
                 <button class="btn btn-warning" onclick="operation('/test/{{ api.id }}/disable')">Disable</button>
             {% endif %}
-                <button class="btn btn-danger" style="margin-left: 5px" onclick="delete_instance('/test/{{ api.id }}/')">Del</button>
+                <button class="btn btn-danger" style="margin-left: 5px" onclick="delete_instance('/test/{{ api.id }}')">Del</button>
             </div>
              <div class="block_body collapse" id="collapse_api_{{ api.id }}">
                 <pre id="code_{{ api.id }}" class="ace_editor" style="min-height: 400px">
@@ -158,6 +159,7 @@
                 </div>
             </div>
         {% endif %}
+        </div>
     </div>
 
     <div class="row tab-pane" id="slaves">
@@ -253,9 +255,9 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="query" class="col-sm-3 control-label">Query:</label>
+                        <label for="query-params" class="col-sm-3 control-label">Query:</label>
                         <div class="col-sm-8">
-                            <input type="text" value="" name="query" class="form-control" id="query"
+                            <input type="text" value="" name="query-params" class="form-control" id="query-params"
                                    placeholder='Json format: {"key": "value"}'>
                         </div>
                     </div>
@@ -283,7 +285,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-warning" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="post_api('/api')">Save</button>
+                <button type="button" class="btn btn-primary" onclick="post_api('/test')">Save</button>
             </div>
         </div>
     </div>
