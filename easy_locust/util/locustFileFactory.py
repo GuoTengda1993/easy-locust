@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import re
-import logging
 from .extractExcel import *
 
 
@@ -165,6 +164,8 @@ def make_locustfile(ptfile) -> str:
         with open(ptfile, 'r') as f:
             ptfile = json.load(f, encoding='utf-8')
         file_type = 'dict'
+    else:
+        return 'ERROR: not support, only xls/json or dict is accepted.'
     if file_type == 'xls':
         pt_data = PtExcel(ptfile)
         token_url, token_body, token_para, token_locate = pt_data.auth_info()
@@ -226,7 +227,9 @@ def make_locustfile(ptfile) -> str:
                 weight = each_api.get('weight', 100)
                 query = each_api.get('query', None)
                 if not isinstance(query, dict):
-                    return "ERROR: query is not dict in json file"
+                    console_logger.warning("query is not dict in json file, query will not be parsed to url: {}"
+                                           .format(query))
+                    query = None
                 pt_url = each_api['url'] if query is None else urlunparse(each_api['url'], query)
                 method = each_api['method']
                 body = each_api['request_data']
@@ -277,8 +280,8 @@ def make_locustfile(ptfile) -> str:
                 weight = each_api.get('weight', 100)
                 query = each_api.get('query', None)
                 if query is not None and not isinstance(query, dict):
-                    console_logger.error("query is not dict in json file, query will not be parsed to url.")
-                    return None
+                    console_logger.warning("query is not dict in json file, query will not be parsed to url: {}"
+                                           .format(query))
                 pt_url = each_api['url'] if query is None else urlunparse(each_api['url'], query)
                 method = each_api['method']
                 body = each_api['request_data']
@@ -313,10 +316,13 @@ def make_locustfile(ptfile) -> str:
 def generate_locust_file(filename):
     _f = make_locustfile(filename)
     if _f.startswith('ERROR:'):
-        logging.error(_f)
+        console_logger.error(_f)
         return False
-    _fn = re.sub('(\.xls)|(\.json)', '.py', filename)
+    if isinstance(filename, str):
+        _fn = re.sub('(\.xls)|(\.json)', '.py', filename)
+    else:
+        _fn = "locust_file_by_web.py"
     with open(_fn, 'w', encoding='utf-8') as f:
         f.writelines(_f)
-    logging.info('Transform xls/json to locustfile finish.')
+    console_logger.info('Transform xls/json to locustfile finish.')
     return True

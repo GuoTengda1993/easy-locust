@@ -37,6 +37,10 @@ class Config(db.Model):
     run_in_order = db.Column(db.Integer, default=0)
     content_type = db.Column(db.String(30), default="application/json")
     headers = db.Column(db.Text)
+    locust_port = db.Column(db.Integer, default=8089)
+    step_load = db.Column(db.Boolean, default=False)
+    step_clients = db.Column(db.Integer, default=1)
+    step_time = db.Column(db.String(10), default='300s')
 
 
 class Test(db.Model):

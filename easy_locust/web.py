@@ -5,6 +5,7 @@ from functools import wraps
 from flask import request, render_template
 from flask_restful import Resource, Api
 from easy_locust.models import app, db, Config, Test, Slave
+from easy_locust.web_util import generate, run_single, run_distribute
 
 from easy_locust.util.ssh_agent import SSHAgent
 from paramiko.ssh_exception import AuthenticationException
@@ -72,6 +73,8 @@ class ConfigManage(Resource):
         token = bool(data.get('token', False))
         run_in_order = bool(data.get('run_in_order', False))
         request_mode = data.get('request_mode')
+        if max_wait < min_wait:
+            return 'max-wait-time should not be smaller than min-wait-time', 210
         if request_mode not in ['FastHttpLocust', 'HttpLocust']:
             return 'request_mode should be FastHttpLocust or HttpLocust', 210
         if max_wait < min_wait:
@@ -303,6 +306,22 @@ class TestOp(Resource):
             return 'No such action', 404
         db.session.commit()
         return 'success', 200
+
+
+class Action(Resource):
+
+    @format_response
+    def get(self, act):
+        actions = {
+            'generate': generate,
+            'run': run_single,
+            'run-distribute': run_distribute
+        }
+        fu = actions.get(act)
+        if not fu:
+            return "No such action.", 404
+        fu()
+        return "success", 200
 
 
 @app.route('/', methods=['GET'])

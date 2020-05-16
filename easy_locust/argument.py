@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-import inspect
-import importlib
 import logging
 import time
 
 import requests
-
-from locust.core import HttpLocust, Locust
 
 from .util.ssh_agent import SSHAgent
 from .util.locustFileFactory import generate_locust_file
@@ -61,79 +57,6 @@ def find_locustfile(locustfile):
                 break
             path = parent_path
     # Implicit 'return None' if nothing was found
-
-
-def is_locust(tup):
-    """
-    Takes (name, object) tuple, returns True if it's a public Locust subclass.
-    """
-    name, item = tup
-    return bool(
-        inspect.isclass(item)
-        and issubclass(item, Locust)
-        and hasattr(item, "task_set")
-        and getattr(item, "task_set")
-        and not name.startswith('_')
-    )
-
-
-def load_locustfile(path):
-    """
-    Import given locustfile path and return (docstring, callables).
-
-    Specifically, the locustfile's ``__doc__`` attribute (a string) and a
-    dictionary of ``{'name': callable}`` containing all callables which pass
-    the "is a Locust" test.
-    """
-
-    def __import_locustfile__(filename, path):
-        """
-        Loads the locust file as a module, similar to performing `import`
-        """
-        try:
-            # Python 3 compatible
-            source = importlib.machinery.SourceFileLoader(os.path.splitext(locustfile)[0], path)
-            imported = source.load_module()
-        except AttributeError:
-            # Python 2.7 compatible
-            import imp
-            imported = imp.load_source(os.path.splitext(locustfile)[0], path)
-
-        return imported
-
-    # Start with making sure the current working dir is in the sys.path
-    sys.path.insert(0, os.getcwd())
-    # Get directory and locustfile name
-    directory, locustfile = os.path.split(path)
-    # If the directory isn't in the PYTHONPATH, add it so our import will work
-    added_to_path = False
-    index = None
-    if directory not in sys.path:
-        sys.path.insert(0, directory)
-        added_to_path = True
-    # If the directory IS in the PYTHONPATH, move it to the front temporarily,
-    # otherwise other locustfiles -- like Locusts's own -- may scoop the intended
-    # one.
-    else:
-        i = sys.path.index(directory)
-        if i != 0:
-            # Store index for later restoration
-            index = i
-            # Add to front, then remove from original position
-            sys.path.insert(0, directory)
-            del sys.path[i + 1]
-    # Perform the import
-    imported = __import_locustfile__(locustfile, path)
-    # Remove directory from path if we added it ourselves (just to be neat)
-    if added_to_path:
-        del sys.path[0]
-    # Put back in original index if we moved it
-    if index is not None:
-        sys.path.insert(index + 1, directory)
-        del sys.path[0]
-    # Return our two-tuple
-    locusts = dict(filter(is_locust, vars(imported).items()))
-    return imported.__doc__, locusts
 
 
 # New feature: find locust path

@@ -1,7 +1,6 @@
 import logging
 import os
 import signal
-import socket
 import sys
 import time
 import configargparse
@@ -13,10 +12,11 @@ from locust import events, runners, web
 from locust.core import HttpLocust, Locust
 from locust.inspectlocust import get_task_ratio_dict, print_task_ratio
 from locust.log import console_logger, setup_logging
-from locust.runners import LocalLocustRunner, MasterLocustRunner, SlaveLocustRunner
+from locust.runners import LocalLocustRunner, MasterLocustRunner
 from locust.stats import (print_error_report, print_percentile_stats, print_stats,
                     stats_printer, stats_writer, write_stat_csvs)
 from locust.util.timespan import parse_timespan
+from locust.main import load_locustfile
 
 import shutil
 from threading import Thread
@@ -24,7 +24,7 @@ from .util.locustFileFactory import generate_locust_file
 from .util.extractExcel import PtExcel
 from .util.boomer_client import gen_boomer_client_json
 
-from .argument import find_locustfile, load_locustfile, get_locust_path, pt_slave, pt_slave_boomer
+from .argument import get_locust_path, pt_slave, pt_slave_boomer, find_locustfile
 
 
 _internals = [Locust, HttpLocust]
@@ -85,27 +85,6 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
         '--master',
         action='store_true',
         help="Set locust to run in distributed mode with this process as master"
-    )
-
-    # if locust should be run in distributed mode as slave
-    parser.add_argument(
-        '--slave',
-        action='store_true',
-        help="Set locust to run in distributed mode with this process as slave"
-    )
-    
-    # master host options
-    parser.add_argument(
-        '--master-host',
-        default="127.0.0.1",
-        help="Host or IP address of locust master for distributed load testing. Only used when running with --slave. Defaults to 127.0.0.1."
-    )
-    
-    parser.add_argument(
-        '--master-port',
-        type=int,
-        default=5557,
-        help="The port to connect to that is used by the locust master for distributed load testing. Only used when running with --slave. Defaults to 5557. Note that slaves will also connect to the master node on this port + 1."
     )
 
     parser.add_argument(
@@ -421,9 +400,6 @@ def main():
         if not options.no_web:
             logger.error("The --run-time argument can only be used together with --no-web")
             sys.exit(1)
-        if options.slave:
-            logger.error("--run-time should be specified on the master node, and not on slave nodes")
-            sys.exit(1)
         try:
             options.run_time = parse_timespan(options.run_time)
         except ValueError:
@@ -439,9 +415,6 @@ def main():
     if options.step_time:
         if not options.step_load:
             logger.error("The --step-time argument can only be used together with --step-load")
-            sys.exit(1)
-        if options.slave:
-            logger.error("--step-time should be specified on the master node, and not on slave nodes")
             sys.exit(1)
         try:
             options.step_time = parse_timespan(options.step_time)
@@ -515,12 +488,6 @@ def main():
                     logger.error('Something happened, collect Exceptions here: {}'.format(e))
 
         runners.locust_runner = MasterLocustRunner(locust_classes, options)
-    elif options.slave:
-        try:
-            runners.locust_runner = SlaveLocustRunner(locust_classes, options)
-        except socket.error as e:
-            logger.error("Failed to connect to the Locust master: %s", e)
-            sys.exit(-1)
     else:
         runners.locust_runner = LocalLocustRunner(locust_classes, options)
     # main_greenlet is pointing to runners.locust_runner.greenlet by default, it will point the web greenlet later if in web mode
@@ -534,11 +501,11 @@ def main():
                 time.sleep(1)
         if options.step_time:
             runners.locust_runner.start_stepload(options.num_clients, options.hatch_rate, options.step_clients, options.step_time)
-        elif not options.slave:
+        else:
             runners.locust_runner.start_hatching(options.num_clients, options.hatch_rate)
             # make locusts are spawned
             time.sleep(1)
-    elif not options.slave:
+    else:
         # spawn web greenlet
         logger.info("Starting web monitor at http://%s:%s" % (options.web_host or "*", options.port))
         main_greenlet = gevent.spawn(web.start, locust_classes, options)
@@ -547,7 +514,7 @@ def main():
         spawn_run_time_limit_greenlet()
 
     stats_printer_greenlet = None
-    if not options.only_summary and (options.print_stats or (options.no_web and not options.slave)):
+    if not options.only_summary and (options.print_stats or options.no_web):
         # spawn stats printing greenlet
         stats_printer_greenlet = gevent.spawn(stats_printer)
 
