@@ -25,6 +25,18 @@
           <li><a href="#slaves" data-toggle="tab">Slaves</a></li>
           <!--<li><a href="#auth" data-toggle="tab">Auth</a></li>-->
       </ul>
+        <ul class="nav navbar-nav navbar-right">
+            <div class="btn-group" style="margin-top: 9px">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">Action
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a onclick="operation('/action/generate')">Generate locust-file</a></li>
+                    <li><a onclick="operation('/action/run')">Run</a></li>
+                    <li><a onclick="operation('/action/run-distribute')">Run in distributed-mode</a></li>
+                </ul>
+            </div>
+        </ul>
     </div>
   </div>
 </nav>
@@ -64,7 +76,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="max-wait" class="col-sm-3 control-label">Min Wait Time(s):</label>
+                    <label for="max-wait" class="col-sm-3 control-label">Max Wait Time(s):</label>
                     <div class="col-sm-8">
                         <input type="text" value="{{ config.max_wait }}" class="form-control" id="max-wait" name="max-wait"
                                placeholder=">= min-wait-time, default: 0.">

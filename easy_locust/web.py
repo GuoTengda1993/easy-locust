@@ -320,8 +320,8 @@ class Action(Resource):
         fu = actions.get(act)
         if not fu:
             return "No such action.", 404
-        fu()
-        return "success", 200
+        status = fu()
+        return status, 200
 
 
 @app.route('/', methods=['GET'])
@@ -341,6 +341,7 @@ def register_apis(api_reg):
     api_reg.add_resource(TestList, '/test/list')
     api_reg.add_resource(TestManage, '/test', '/test/<id>')
     api_reg.add_resource(TestOp, '/test/<id>/<operation>')
+    api_reg.add_resource(Action, '/action/<act>')
 
 
 def register_db():

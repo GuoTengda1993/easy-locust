@@ -71,7 +71,7 @@ MODE_TOKEN_FIRST_TIME = '''
 MODE_TOKEN_NEVER = '''
     def setup(self):
         global headers
-        headers = [{"Content-Type": "{CONTENT_TYPE}"}]
+        headers = [@-"Content-Type": "{CONTENT_TYPE}"-@]
 '''
 MODE_TASKSET_GET = '''
     @task({WEIGHT})
@@ -193,17 +193,19 @@ def make_locustfile(ptfile) -> str:
 
         pt_api_info = ptfile.get('apis')
 
-    if 'UserName' in token_body and 'PassWord' in token_body:
-        user_infos = pt_data.pt_user_info() if file_type == 'xls' else ptfile.get('user_info')
-    else:
-        user_infos = [[None, None]]
+    locustfile = BASIC_IMPORT
 
-    locustfile = BASIC_IMPORT.format(USER_INFO=str(user_infos))
+    if token_type == 'YES' or token_type is True:
+        if 'UserName' in token_body and 'PassWord' in token_body:
+            user_infos = pt_data.pt_user_info() if file_type == 'xls' else ptfile.get('user_info')
+        else:
+            user_infos = [[None, None]]
+
+        locustfile += BASIC_TOKEN.format(USER_INFO=str(user_infos))
 
     if str(run_in_order) == '0' or run_in_order == 'FALSE' or run_in_order is False:
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSet')
         if token_type == 'YES' or token_type is True:
-            locustfile += BASIC_TOKEN
             locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
                                                        TOKEN_BODY=token_body,
                                                        TOKEN_LOCATE=token_locate,
@@ -257,7 +259,6 @@ def make_locustfile(ptfile) -> str:
     else:
         locustfile += BASIC_MODE.format(TASK_MODE='TaskSequence')
         if token_type == 'YES' or token_type is True:
-            locustfile += BASIC_TOKEN
             locustfile += MODE_TOKEN_FIRST_TIME.format(TOKEN_URL=token_url,
                                                        TOKEN_BODY=token_body,
                                                        TOKEN_LOCATE=token_locate,

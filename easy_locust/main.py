@@ -23,7 +23,7 @@ from threading import Thread
 from .util.locustFileFactory import generate_locust_file
 from .util.extractExcel import PtExcel
 from .util.boomer_client import gen_boomer_client_json
-
+from .web import init_app
 from .argument import get_locust_path, pt_slave, pt_slave_boomer, find_locustfile
 
 
@@ -303,6 +303,22 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
         help="Run boomer client in slaves."
     )
 
+    parser.add_argument(
+        '--web',
+        action='store_true',
+        dest='web',
+        default=False,
+        help="Run easy-locust in web mode."
+    )
+
+    parser.add_argument(
+        '--web-port',
+        action='store_true',
+        dest='web_port',
+        default=8899,
+        help="The port of easy-locust web, default is 8899."
+    )
+
     return parser, parser.parse_args(args=args)
 
 
@@ -316,6 +332,12 @@ def main():
     logger = logging.getLogger(__name__)
 
     locust_path = get_locust_path()
+
+    if options.web:
+        web_port = options.web_port
+        logger.info('Running easy-locust web: 0.0.0.0:{}'.format(web_port))
+        init_app(port=web_port)
+        sys.exit(0)
 
     if options.demo:
         if not locust_path:

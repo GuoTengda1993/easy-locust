@@ -4,15 +4,17 @@ import sys
 import gevent
 import logging
 import signal
+import socket
 from threading import Thread
 
 from easy_locust.models import Config, Slave, Test
 from easy_locust.util.locustFileFactory import generate_locust_file
+from easy_locust.argument import pt_slave
 
 from locust import runners, events
 from locust import web as locust_web
 from locust.main import load_locustfile
-from locust.runners import LocalLocustRunner
+from locust.runners import LocalLocustRunner, MasterLocustRunner
 from locust.stats import (print_error_report, print_percentile_stats, print_stats, write_stat_csvs)
 
 
@@ -21,12 +23,13 @@ class options:
         pass
 
 
-def config_options():
+def config_options(master=False):
     config = Config.query.filter_by(id=1).first()
     setattr(options, 'host', config.host)
     setattr(options, 'web_host', '*')
     setattr(options, 'port', config.locust_port)
     setattr(options, 'stats_history_enabled', False)
+    setattr(options, 'master', master)
     setattr(options, 'master-bind-host', '*')
     setattr(options, 'master-bind-port', 5557)
     setattr(options, 'heartbeat-liveness', 3)
@@ -67,29 +70,56 @@ def generate():
         "config": conf,
         "apis": api_data
     }
-    return generate_locust_file(locust_dict)
+    status = generate_locust_file(locust_dict)
+    return 'success' if status else 'fail'
 
 
 def run_single():
+    return _run(master=False)
+
+
+def run_distribute():
+    slaves = Slave.query.filter_by(status=1).all()
+    hostname = socket.gethostname()
+    master_ip = socket.gethostbyname(hostname)
+    try:
+        locust_cli_slave = 'nohup locust -f /root/locust_client.py --slave --master-host={masteIP} > /dev/null 2>&1 &' \
+            .format(masteIP=master_ip)
+        thread_pool = []
+        for slave in slaves:
+            _t = Thread(target=pt_slave,
+                        args=(slave.ip, slave.username, slave.password, 'locust_file_by_web.py', locust_cli_slave))
+            logging.info('Prepare slave {}'.format(slave.ip))
+            thread_pool.append(_t)
+            _t.start()
+        for each_t in thread_pool:
+            each_t.join()
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        logging.error('Something happened, collect Exceptions here: {}'.format(e))
+    return _run(master=True)
+
+
+def _run(master=False):
     if not os.path.exists('locust_file_by_web.py'):
-        if not generate_locust_file():
+        if generate() != 'success':
             return 'Fail to generate locust-file!'
     docstring, locusts = load_locustfile('locust_file_by_web.py')
     if not locusts:
         return 'No Locust class found in locust_file_by_web.py!'
     locust_classes = list(locusts.values())
-    config_options()
-    t = Thread(target=run_locust, args=(locust_classes,))
+    config_options(master=master)
+    t = Thread(target=_run_locust, args=(locust_classes,))
     t.start()
+    return 'success'
 
 
-def run_distribute():
-    slaves = Slave.query.filter_by(status=1).all()
-    pass
-
-
-def run_locust(locust_classes):
-    runners.locust_runner = LocalLocustRunner(locust_classes, options)
+def _run_locust(locust_classes):
+    if options.master:
+        runners.locust_runner = MasterLocustRunner(locust_classes, options)
+    else:
+        runners.locust_runner = LocalLocustRunner(locust_classes, options)
     logging.info("Starting web monitor at http://%s:%s" % (options.web_host or "*", options.port))
     main_greenlet = gevent.spawn(locust_web.start, locust_classes, options)
     stats_printer_greenlet = None
