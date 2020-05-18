@@ -44,22 +44,34 @@
 <div class="container tab-content">
       <div class="row tab-pane active" id="main">
         <div class="col-sm-4">
-          <h2>About</h2>
-          <p>Description: ...</p>
-          <ul class="nav nav-pills nav-stacked">
-            <li><a href="https://github.com/GuoTengda1993/easy-locust" target="_blank">GitHub</a></li>
-          </ul>
+            <h2>About</h2>
+            <p>Easy-locust is an extension tool for locust, can generate locust-file and trigger slave-nodes automatically.</p>
+            <ul class="nav nav-pills nav-stacked">
+                <li><a href="https://github.com/GuoTengda1993/easy-locust" target="_blank">GitHub</a></li>
+            </ul>
+            <p><small>When you add apis or slave-nodes, refresh your browser. There is a bug with "window.location.reload()" in static/js/common.js.</small></p>
           <hr class="hidden-sm hidden-md hidden-lg">
         </div>
         <div class="col-sm-8">
-          <h2>Essy Locust</h2>
-          <h5>An extension tool for Locustio</h5>
-          <p>Usage ...</p>
-          <br>
+            <h2>Essy Locust</h2>
+            <h5>An extension tool for <a href="https://locust.io/" target="_blank">Locustio</a></h5>
+            <p>There are three actions when you finish your settings at this web page:</p>
+            <p>1. <strong>Generate locust-file:</strong> Generate locust-file at your current path, the filename is "locust_file_by_web.py". Do not change the filename if you want run locust with this web. But you can change the content of this file.</p>
+            <p>2. <strong>Run:</strong> If you didn't generate locust-file, it will automatically generate "locust_file_by_web.py" and run it. Otherwise, directly run it no matter you change the content.</p>
+            <p>3. <strong>Run in distributed-mode:</strong> Like the second, but it will run all the slave-node except disabled nodes.</p>
+            <br>
+            <h3>Current Config:</h3>
+            <p><strong>Host: </strong>{{ config.host }}</p>
+            <p><strong>Min-Wait: </strong>{{ config.min_wait }}</p>
+            <p><strong>Max-Wait: </strong>{{ config.max_wait }}</p>
+            <p><strong>Request-Mode: </strong>{{ config.request_mode }}</p>
+            <p><strong>Run-in-Order: </strong>{{ config.run_in_order }} <small style="color: blue">0 is false, 1 is true</small></p>
+            <p><strong>Content-Type: </strong>{{ config.content_type }}</p>
         </div>
       </div>
     <div class="row tab-pane" id="config">
         <h2>Config</h2>
+            <p><small style="color: blue">The display of dropdown items maybe incorrect after you saving the config, please check at the main page. If it's fixed, this hint will be disappear.</small></p>
             <form class="form-horizontal">
                 <div class="form-group">
                     <label for="host" class="col-sm-3 control-label">Host:</label>
