@@ -6,6 +6,7 @@ import logging
 import signal
 import socket
 from threading import Thread
+from multiprocessing import Process
 
 from easy_locust.models import Config, Slave, Test
 from easy_locust.util.locustFileFactory import generate_locust_file
@@ -28,17 +29,22 @@ def config_options(master=False):
     setattr(options, 'host', config.host)
     setattr(options, 'web_host', '*')
     setattr(options, 'port', config.locust_port)
+    setattr(options, 'hatch_rate', float(1))
     setattr(options, 'stats_history_enabled', False)
     setattr(options, 'master', master)
     setattr(options, 'master-bind-host', '*')
     setattr(options, 'master-bind-port', 5557)
     setattr(options, 'heartbeat-liveness', 3)
     setattr(options, 'heartbeat-interval', 1)
-    setattr(options, 'step-load', config.step_load)
-    setattr(options, 'step-clients', config.step_clients)
-    setattr(options, 'step-time', config.step_time)
+    setattr(options, 'step_load', config.step_load)
+    setattr(options, 'step_clients', config.step_clients)
+    setattr(options, 'step_time', config.step_time)
     setattr(options, 'stop_timeout', None)
     setattr(options, 'exit_code_on_error', 1)
+    setattr(options, 'csvfilebase', None)
+    setattr(options, 'no_web', False)
+    setattr(options, 'no_reset_stats', True)
+    setattr(options, 'reset_stats', False)
 
 
 def generate():
@@ -109,18 +115,19 @@ def _run(master=False):
     if not locusts:
         return 'No Locust class found in locust_file_by_web.py!'
     locust_classes = list(locusts.values())
-    config_options(master=master)
-    t = Thread(target=_run_locust, args=(locust_classes,))
-    t.start()
+    p = Process(target=_run_locust, args=(locust_classes, master,))
+    p.start()
     return 'success'
 
 
-def _run_locust(locust_classes):
+def _run_locust(locust_classes, master):
+    config_options(master=master)
+    print('*** Starting locust: {}:{} ***'.format(options.web_host, options.port))
     if options.master:
         runners.locust_runner = MasterLocustRunner(locust_classes, options)
     else:
         runners.locust_runner = LocalLocustRunner(locust_classes, options)
-    logging.info("Starting web monitor at http://%s:%s" % (options.web_host or "*", options.port))
+    logging.info("Starting web monitor at http://%s:%s" % (options.web_host or "0.0.0.0", options.port))
     main_greenlet = gevent.spawn(locust_web.start, locust_classes, options)
     stats_printer_greenlet = None
     

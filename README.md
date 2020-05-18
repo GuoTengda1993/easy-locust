@@ -13,6 +13,8 @@ Easy-Locust is an extension tool for Locust. With this tool, you don't need to w
 If you need master-slave mode, you just need to fill Excel Sheet 'Slave', and use --master. The only precondition is to install the same version locustio in each Slave.
 Easy-Locust is not necessary for slaves. 
 
+`easy-locust --web --web-port=8899` -- Run in web mode, you can config and trigger slave-nodes with this mode.
+
 Use `easy-locust --demo` to generate an Excel demo, fill it and start your test.
 
 Same parameters with locust, so I just introduce the different parameters here:
@@ -59,7 +61,8 @@ Open source licensed under the MIT license (see _LICENSE_ file for details).
 
 
 ### Change Log
-- 0.1.12: Add `content-type` support
+- 0.2.1: Easy-locust web mode.
+- 0.1.12: `content-type` support.
 - 0.1.11: Add boomer client as slave, which has much more preformance.
 - 0.1.10: Delete useless code.
 - 0.1.9: Support Json to locustfile. And can use `easy_locust.factory(dict)` to get strings of locustfile. 

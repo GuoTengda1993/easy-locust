@@ -1,3 +1,4 @@
 include LICENSE
 recursive-include easy_locust/demo *
 recursive-include easy_locust/boomer_client *
+recursive-include easy_locust/templates *

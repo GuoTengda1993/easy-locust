@@ -52,7 +52,7 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
     )
     
     parser.add_argument(
-        '-P', '--port', '--web-port',
+        '-P', '--port',
         type=int,
         default=8089,
         help="Port on which to run web host"
@@ -313,7 +313,7 @@ def parse_options(args=None, default_config_files=['~/.locust.conf','locust.conf
 
     parser.add_argument(
         '--web-port',
-        action='store_true',
+        type=int,
         dest='web_port',
         default=8899,
         help="The port of easy-locust web, default is 8899."

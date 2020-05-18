@@ -40,7 +40,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     zip_safe=False,
-    install_requires=["locustio>=0.14.0", "paramiko>=2.4.1", "xlrd>=1.2.0"],
+    install_requires=["locustio>=0.14.0", "paramiko>=2.4.1", "Flask>=1.0.0", "xlrd>=1.2.0", "flask-restful>=0.3.5"],
     # test_suite="",
     # tests_require=['mock'],
     entry_points={
