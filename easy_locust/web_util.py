@@ -27,7 +27,7 @@ class options:
 def config_options(master=False):
     config = Config.query.filter_by(id=1).first()
     setattr(options, 'host', config.host)
-    setattr(options, 'web_host', '*')
+    setattr(options, 'web_host', '0.0.0.0')
     setattr(options, 'port', config.locust_port)
     setattr(options, 'hatch_rate', float(1))
     setattr(options, 'stats_history_enabled', False)

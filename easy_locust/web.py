@@ -218,7 +218,6 @@ class TestList(Resource):
         res = [{
             "id": test.id,
             "name": test.name,
-            "config_id": test.config_id,
             "weight": test.weight,
             "url": test.url,
             "method": test.method,
@@ -239,7 +238,6 @@ class TestManage(Resource):
         res = {
             "id": test.id,
             "name": test.name,
-            "config_id": test.config_id,
             "weight": test.weight,
             "url": test.url,
             "method": test.method,
@@ -269,7 +267,11 @@ class TestManage(Resource):
     def put(self, id):
         test = Test.query.filter_by(id=id).first_or_404()
         raw_data = request.json
-        data = json.loads(raw_data, encoding='utf-8')
+        if isinstance(raw_data, dict):
+            data = raw_data
+            raw_data = json.dumps(raw_data, ensure_ascii=False, indent=4)
+        else:
+            data = json.loads(raw_data, encoding='utf-8')
         if data.get('method') not in Methods:
             return "method error", 210
         try:
